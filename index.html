@@ -332,6 +332,9 @@ function Game() {
   };
 
   function populateGrade(grade) {
+    if(selectedGrade===grade){
+      if(!window.confirm("Reload new Grade "+grade+" words?")) return;
+    }
     setSelectedGrade(grade);
     const pool = [...gradeWords[grade]];
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
