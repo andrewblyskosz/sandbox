@@ -1,15 +1,4 @@
-<!D
-  function useHint() {
-    const word = shuffled[idx];
-    if (!word || hints >= 2) return;
-    const newHints = hints + 1;
-    setHints(newHints);
-    setTotalHints(t => t + 1);
-    // Reveal first N letters
-    setAnswer(word.slice(0, newHints));
-    if (inputRef.current) inputRef.current.focus();
-  }
-OCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
