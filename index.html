@@ -342,23 +342,34 @@ function Game() {
         setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
       }
       if(rec && rec.grade) setSelectedGrade(rec.grade);
+      if(rec && rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
+        setShuffled(rec.shuffled);
+        setIdx(rec.wordIdx||0);
+        setResults(rec.results||[]);
+        setTries(rec.tries||0);
+        setPhase("game");
+        setTimeout(()=>showToast("▶ Resuming from word "+(rec.wordIdx+1)+"!","success"),500);
+      }
     })
     .catch(()=>{})
     .finally(()=>{ loadedRef.current=true; });
   },[]);
 
-  // ── Save on change (debounced, only after load) ──
+  // ── Save on change (debounced) ──
   useEffect(()=>{
-    if(!loadedRef.current) return;
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
+      if(!loadedRef.current) return;
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
-        body:JSON.stringify({words:words.map(w=>w.trim()),grade:selectedGrade})
-      }).catch(()=>{});
-    },1500);
-  },[words,selectedGrade]);
+        body:JSON.stringify({words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries})
+      })
+      .then(r=>r.json())
+      .then(d=>console.log("Saved:",d.record))
+      .catch(e=>console.error("Save error:",e));
+    },2000);
+  },[words,selectedGrade,phase,idx,results,tries]);
 
 
   const [hints,         setHints]        = useState(0);
