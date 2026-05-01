@@ -337,7 +337,7 @@ function Game() {
     })
     .then(r=>r.json())
     .then(data=>{
-      const rec = data.record;
+      const rec = data.record !== undefined ? data.record : data;
       console.log("Loaded:",rec);
       if(rec){
         if(rec.words && rec.words.filter(w=>w).length>0){
