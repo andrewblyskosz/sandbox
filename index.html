@@ -376,7 +376,7 @@ function Game() {
         setResults(rec.results||[]);
         setTries(rec.tries||0);
         setPhase("game");
-        setTimeout(()=>showToast("▶ Resuming from word "+((rec.wordIdx||0)+1)+"!","success"),300);
+        setTimeout(()=>setToast({msg:"▶ Resuming from word "+((rec.wordIdx||0)+1)+"!",type:"success"}),300); setTimeout(()=>setToast(null),3100);
       }
     })
     .catch(e=>console.error("Load failed:",e));
