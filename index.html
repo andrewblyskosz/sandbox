@@ -332,11 +332,13 @@ function Game() {
 
   // ── Load on mount ──
   useEffect(()=>{
+    console.log("Loading from JSONbin...");
     fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
       headers:{"X-Master-Key":JSONBIN_KEY}
     })
-    .then(r=>r.json())
+    .then(r=>{ console.log("Load status:",r.status); return r.json(); })
     .then(data=>{
+      console.log("Load response:",data);
       const rec = data.record;
       if(rec && rec.words && rec.words.length>0){
         setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
@@ -357,9 +359,9 @@ function Game() {
 
   // ── Save on change (debounced) ──
   useEffect(()=>{
+    if(!loadedRef.current) return;
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
-      if(!loadedRef.current) return;
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
