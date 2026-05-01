@@ -345,50 +345,10 @@ function Game() {
   const countdownRef = useRef(null);
   const [modal, setModal] = useState(null);
 
-  const JSONBIN_ID = "69f4b99e36566621a81344ee";
-  const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
 
-  // Load full state from JSONbin on mount
-  React.useEffect(()=>{
-    fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
-      headers: { "X-Master-Key": JSONBIN_KEY }
-    })
-    .then(r=>r.json())
-    .then(data=>{
-      const record = data.record;
-      if(record.words && record.words.length > 0){
-        const loaded = record.words;
-        setWords([...loaded, ...Array(Math.max(0,20-loaded.length)).fill("")]);
-      }
-      if(record.grade) setSelectedGrade(record.grade);
-      // Restore mid-game progress
-      if(record.phase === "game" && record.shuffled && record.shuffled.length > 0){
-        setShuffled(record.shuffled);
-        setIdx(record.wordIdx || 0);
-        setResults(record.results || []);
-        setTries(record.tries || 0);
-        setPhase("game");
-        setTimeout(()=>showToast("▶ Resuming your game from word "+(record.wordIdx+1)+"!","success"),500);
-      }
-    })
-    .catch(()=>{ loadedRef.current = true; });
-    loadedRef.current = true;
-  },[]);
 
   // Save words to JSONbin whenever words or grade change
-  const saveTimeoutRef = React.useRef(null);
-  const loadedRef = React.useRef(false);
-  React.useEffect(()=>{
-    if(!loadedRef.current) return;
-    clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(()=>{
-      fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_KEY },
-        body: JSON.stringify({ words: words.map(w=>w.trim()), grade: selectedGrade, phase, shuffled, wordIdx: idx, results, tries })
-      }).catch(()=>{});
-    }, 1500);
-  },[words, selectedGrade, phase, idx, results, tries]);
+
 
 
   const gradeWords = {
