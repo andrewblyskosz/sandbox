@@ -364,8 +364,10 @@ function Game() {
       console.log("Raw load:",JSON.stringify(data).slice(0,200));
       const rec = data.record || data;
       if(!rec) return;
-      if(rec.words && Array.isArray(rec.words) && rec.words.filter(w=>w).length>0){
-        setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
+      if(rec.words && Array.isArray(rec.words)){
+        const filled = [...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")].slice(0,20);
+        console.log("Setting words:",filled.filter(w=>w));
+        setWords(filled);
       }
       if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
       if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
@@ -548,9 +550,9 @@ function Game() {
       doFlash("red"); triggerBgGlow("wrong");
       setFeedback("wrong");
       setResults(r=>[...r,{word,ok:false}]);
-      setCountdown(8);
-      let cw=8; countdownRef.current=setInterval(()=>{ cw--; if(cw<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(cw);} },1000);
-      setTimeout(()=>advance(shuffled,idx), 8000);
+      setCountdown(2);
+      let cw=2; countdownRef.current=setInterval(()=>{ cw--; if(cw<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(cw);} },1000);
+      setTimeout(()=>advance(shuffled,idx), 2000);
     }
   };
 
