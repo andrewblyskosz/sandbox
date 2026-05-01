@@ -343,7 +343,7 @@ function Game() {
         if(rec.words && rec.words.filter(w=>w).length>0){
           setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
         }
-        if(rec.grade) setSelectedGrade(rec.grade);
+        if(rec.grade !== undefined) setSelectedGrade(rec.grade);
         if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
           setShuffled(rec.shuffled);
           setIdx(rec.wordIdx||0);
@@ -491,7 +491,7 @@ function Game() {
     const valid = words.map(w=>w.trim()).filter(Boolean);
     if(!valid.length) return;
     const s=[...valid].sort(()=>Math.random()-.5);
-    setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null);
+    setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0);
     setAnswer(""); setFeedback(null); setPhase("game");
   };
 
@@ -545,7 +545,7 @@ function Game() {
 
   const playAgain = () => {
     const s=[...shuffled].sort(()=>Math.random()-.5);
-    setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null);
+    setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0);
     setAnswer(""); setFeedback(null); setPhase("game");
   };
 
