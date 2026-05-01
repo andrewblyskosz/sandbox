@@ -327,54 +327,63 @@ function Game() {
 
   const JSONBIN_ID = "69f4b99e36566621a81344ee";
   const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
-  const [jbLoaded, setJbLoaded] = useState(false);
   const saveTimerRef = useRef(null);
+  const isSaving = useRef(false);
 
-  // Load on mount
-  useEffect(()=>{
-    fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest?meta=false",{
-      headers:{"X-Master-Key":JSONBIN_KEY}
-    })
-    .then(r=>r.json())
-    .then(data=>{
-      const rec = data.record !== undefined ? data.record : data;
-      console.log("Loaded:",rec);
-      if(rec){
-        if(rec.words && rec.words.filter(w=>w).length>0){
-          setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
-        }
-        if(rec.grade !== undefined) setSelectedGrade(rec.grade);
-        if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
-          setShuffled(rec.shuffled);
-          setIdx(rec.wordIdx||0);
-          setResults(rec.results||[]);
-          setTries(rec.tries||0);
-          setPhase("game");
-          setTimeout(()=>showToast("▶ Resuming from word "+(( rec.wordIdx||0)+1)+"!","success"),600);
-        }
-      }
-    })
-    .catch(e=>console.error("Load error:",e))
-    .finally(()=>setJbLoaded(true));
-  },[]);
-
-  // Save - only after load complete
-  useEffect(()=>{
-    if(!jbLoaded) return;
+  const jbSave = (overrides={}) => {
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
-      const payload = {words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries};
-      console.log("Saving:",payload);
+      if(isSaving.current) return;
+      isSaving.current = true;
+      const payload = Object.assign({
+        words: words.map(w=>w.trim()),
+        grade: selectedGrade,
+        phase,
+        shuffled,
+        wordIdx: idx,
+        results,
+        tries
+      }, overrides);
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
         body:JSON.stringify(payload)
       })
       .then(r=>r.json())
-      .then(d=>console.log("Save OK:",d))
-      .catch(e=>console.error("Save error:",e));
-    },1500);
-  },[jbLoaded,words,selectedGrade,phase,idx,results,tries]);
+      .then(()=>{ isSaving.current=false; showToast("✓ Saved","success"); })
+      .catch(()=>{ isSaving.current=false; });
+    },800);
+  };
+
+  const jbLoad = () => {
+    fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
+      headers:{"X-Master-Key":JSONBIN_KEY}
+    })
+    .then(r=>r.json())
+    .then(data=>{
+      const rec = data.record;
+      if(!rec) return;
+      if(rec.words && rec.words.filter(w=>w).length>0){
+        setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
+      }
+      if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
+      if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
+        setShuffled(rec.shuffled);
+        setIdx(rec.wordIdx||0);
+        setResults(rec.results||[]);
+        setTries(rec.tries||0);
+        setPhase("game");
+        showToast("▶ Resuming from word "+((rec.wordIdx||0)+1)+"!","success");
+      }
+    })
+    .catch(()=>showToast("Could not load saved data","error"));
+  };
+
+  // Load once on mount
+  useEffect(()=>{ jbLoad(); },[]);
+
+
+
 
 
 
@@ -402,6 +411,7 @@ function Game() {
     const pool = [...gradeWords[grade]];
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     setWords(pool.slice(0,20).concat(Array(Math.max(0,20-pool.length)).fill('')));
+    setTimeout(()=>jbSave({grade:grade}),100);
   }
 
   function useHint() {
@@ -497,7 +507,7 @@ function Game() {
 
   const advance = (sArr, i) => {
     const next = i+1;
-    if(next >= sArr.length){ setPhase("results"); setFeedback(null); }
+    if(next >= sArr.length){ setPhase("results"); setFeedback(null); jbSave({phase:"results"}); }
     else {
       setIdx(next); setTries(0); setAnswer(""); setFeedback(null);
       setFeedback(null); setTimeout(()=>inputRef.current?.focus(), 100);
