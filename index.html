@@ -359,11 +359,12 @@ function Game() {
     fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
       headers:{"X-Master-Key":JSONBIN_KEY}
     })
-    .then(r=>r.json())
+    .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
     .then(data=>{
-      const rec = data.record;
+      console.log("Raw load:",JSON.stringify(data).slice(0,200));
+      const rec = data.record || data;
       if(!rec) return;
-      if(rec.words && rec.words.filter(w=>w).length>0){
+      if(rec.words && Array.isArray(rec.words) && rec.words.filter(w=>w).length>0){
         setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
       }
       if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
@@ -373,10 +374,10 @@ function Game() {
         setResults(rec.results||[]);
         setTries(rec.tries||0);
         setPhase("game");
-        showToast("▶ Resuming from word "+((rec.wordIdx||0)+1)+"!","success");
+        setTimeout(()=>showToast("▶ Resuming from word "+((rec.wordIdx||0)+1)+"!","success"),300);
       }
     })
-    .catch(()=>showToast("Could not load saved data","error"));
+    .catch(e=>console.error("Load failed:",e));
   };
 
   // Load once on mount
@@ -537,9 +538,9 @@ function Game() {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
       setResults(r=>[...r,{word,ok:true}]);
-      setCountdown(2);
-      let c=2; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
-      setTimeout(()=>advance(shuffled,idx), 2300);
+      setCountdown(1);
+      let c=1; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
+      setTimeout(()=>advance(shuffled,idx), 1500);
     } else if(tries===0) {
       setFeedback("try"); setTries(1);
       setTimeout(()=>{ setFeedback(null); setAnswer(""); inputRef.current?.focus(); },1900);
