@@ -540,7 +540,7 @@ function Game() {
   },[]);
 
   return (
-    <div id="app-inner" style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",minHeight:"100vh",padding:"0 20px 18px"}}>
+    <div id="app-inner" style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"0 20px 18px"}}>
 
       {flash && <div className={"flash flash-"+flash} key={flash+Date.now()}/>}
       {toast && <div className={"toast toast-"+toast.type}>{toast.msg}</div>}
@@ -584,7 +584,7 @@ function Game() {
                   <span className="word-num">{i+1}</span>
                   <input className="word-input" placeholder={"word "+(i+1)} value={words[i]}
                     style={highlight}
-                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); }}
+                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); setSelectedGrade(null); }}
                     onKeyDown={e=>{
                       if(e.key==="Enter"){
                         const all=document.querySelectorAll(".word-input");
@@ -605,7 +605,7 @@ function Game() {
             </button>
           </div>
 
-          <button className="btn btn-start" onClick={startGame}>⚡ BEGIN THE BATTLE ⚡</button>
+          <button className="btn btn-start" onClick={startGame}><span>✨</span><span>LET'S SPELL!</span><span>✨</span></button>
 
           {/* How to Play + About — small, under begin button */}
           <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
