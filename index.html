@@ -327,51 +327,57 @@ function Game() {
 
   const JSONBIN_ID = "69f4b99e36566621a81344ee";
   const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
-  const loadedRef = useRef(false);
+  const [jbLoaded, setJbLoaded] = useState(false);
   const saveTimerRef = useRef(null);
 
-  // ── Load on mount ──
+  // Load on mount
   useEffect(()=>{
-    console.log("Loading from JSONbin...");
     fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
       headers:{"X-Master-Key":JSONBIN_KEY}
     })
-    .then(r=>{ console.log("Load status:",r.status); return r.json(); })
+    .then(r=>r.json())
     .then(data=>{
-      console.log("Load response:",data);
       const rec = data.record;
-      if(rec && rec.words && rec.words.length>0){
-        setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
-      }
-      if(rec && rec.grade) setSelectedGrade(rec.grade);
-      if(rec && rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
-        setShuffled(rec.shuffled);
-        setIdx(rec.wordIdx||0);
-        setResults(rec.results||[]);
-        setTries(rec.tries||0);
-        setPhase("game");
-        setTimeout(()=>showToast("▶ Resuming from word "+(rec.wordIdx+1)+"!","success"),500);
+      console.log("Loaded:",rec);
+      if(rec){
+        if(rec.words && rec.words.filter(w=>w).length>0){
+          setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
+        }
+        if(rec.grade) setSelectedGrade(rec.grade);
+        if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
+          setShuffled(rec.shuffled);
+          setIdx(rec.wordIdx||0);
+          setResults(rec.results||[]);
+          setTries(rec.tries||0);
+          setPhase("game");
+          setTimeout(()=>showToast("▶ Resuming from word "+(( rec.wordIdx||0)+1)+"!","success"),600);
+        }
       }
     })
-    .catch(()=>{})
-    .finally(()=>{ loadedRef.current=true; });
+    .catch(e=>console.error("Load error:",e))
+    .finally(()=>setJbLoaded(true));
   },[]);
 
-  // ── Save on change (debounced) ──
+  // Save - only after load complete
   useEffect(()=>{
-    if(!loadedRef.current) return;
+    if(!jbLoaded) return;
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
+      const payload = {words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries};
+      console.log("Saving:",payload);
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
-        body:JSON.stringify({words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries})
+        body:JSON.stringify(payload)
       })
       .then(r=>r.json())
-      .then(d=>console.log("Saved:",d.record))
+      .then(d=>console.log("Save OK:",d))
       .catch(e=>console.error("Save error:",e));
-    },2000);
-  },[words,selectedGrade,phase,idx,results,tries]);
+    },1500);
+  },[jbLoaded,words,selectedGrade,phase,idx,results,tries]);
+
+
+
 
 
   const [hints,         setHints]        = useState(0);
