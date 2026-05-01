@@ -102,7 +102,7 @@ body::before{
 .btn:active{transform:scale(.95)!important;}
 .btn-start{background:linear-gradient(135deg,#FF2D78,#FF6B00);color:#fff;font-size:1rem;padding:8px 20px;width:100%;box-shadow:0 4px 28px rgba(255,45,120,.5);position:relative;z-index:1;}
 .btn-start:hover{transform:translateY(-2px);box-shadow:0 6px 36px rgba(255,45,120,.7);}
-.btn-speak{background:linear-gradient(135deg,#7B2FFF,#00C4DD);color:#fff;font-size:1rem;padding:12px 20px;box-shadow:0 4px 20px rgba(123,47,255,.4);width:100%;}
+.btn-speak{background:linear-gradient(135deg,#7B2FFF,#00C4DD);color:#fff;font-size:1rem;padding:12px 28px;box-shadow:0 4px 20px rgba(123,47,255,.4);display:inline-flex;align-items:center;gap:8px;}
 .btn-speak:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(0,245,255,.5);}
 .btn-speak.pulsing{animation:speak-pulse .55s ease-in-out infinite alternate;}
 @keyframes speak-pulse{from{box-shadow:0 4px 20px rgba(0,245,255,.3);}to{box-shadow:0 4px 42px rgba(0,245,255,.75);transform:scale(1.02);}}
@@ -270,6 +270,7 @@ body::before{
 .rotate-title{font-family:'Bangers',cursive;font-size:2rem;letter-spacing:3px;background:linear-gradient(135deg,#FF2D78,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .rotate-sub{font-family:sans-serif;font-size:.95rem;font-weight:700;color:rgba(255,255,255,.55);line-height:1.6;}
 @keyframes phone-rock{0%,100%{transform:rotate(0deg);}50%{transform:rotate(25deg);}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 @media(orientation:landscape){.rotate-screen{display:none !important;}}
 </style>
 <style>
@@ -285,13 +286,31 @@ a[href="index.html"]:hover{
 </head>
 <body>
 <div class="rotate-screen" id="rotatePrompt">
-  <div style="font-size:3.2rem;animation:phone-rock 1.5s ease-in-out infinite;">📱</div>
+  <div style="position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center;">
+    <div style="position:absolute;inset:0;animation:spin 3s linear infinite;">
+      <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 20,60 A 40,40 0 0,1 60,20" fill="none" stroke="#FF2D78" stroke-width="3.5" stroke-linecap="round"/>
+        <polygon points="60,10 55,22 65,22" fill="#FF2D78"/>
+        <path d="M 100,60 A 40,40 0 0,1 60,100" fill="none" stroke="#FF2D78" stroke-width="3.5" stroke-linecap="round"/>
+        <polygon points="60,110 55,98 65,98" fill="#FF2D78"/>
+      </svg>
+    </div>
+    <div style="position:absolute;inset:-14px;animation:spin 5s linear infinite reverse;">
+      <svg viewBox="0 0 148 148" width="148" height="148" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 14,74 A 60,60 0 0,1 74,14" fill="none" stroke="rgba(0,245,255,.5)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="8 6"/>
+        <path d="M 134,74 A 60,60 0 0,1 74,134" fill="none" stroke="rgba(0,245,255,.5)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="8 6"/>
+        <polygon points="74,4 68,16 80,16" fill="rgba(0,245,255,.7)"/>
+        <polygon points="74,144 68,132 80,132" fill="rgba(0,245,255,.7)"/>
+      </svg>
+    </div>
+    <div style="font-size:3.2rem;animation:phone-rock 1.5s ease-in-out infinite;z-index:1;">📱</div>
+  </div>
   <div class="rotate-title">ROTATE YOUR DEVICE</div>
-  <div class="rotate-sub">This game is designed for landscape mode.<br/>Turn your phone sideways for the best experience!</div>
+  <div class="rotate-sub">This game shines in landscape mode — ideally on an iPad or larger screen.<br/>Flip your device sideways for the full experience!</div>
 </div>
 <div id="bg-glow"></div>
 <div id="app"></div>
-<input id="fileInput" type="file" accept=".json" style="display:none"/>
+
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -322,7 +341,52 @@ function Game() {
   const [hints,        setHints]        = useState(0);
   const [totalHints,   setTotalHints]   = useState(0);
   const [selectedGrade,setSelectedGrade]= useState(null);
+  const [countdown, setCountdown] = useState(null);
+  const countdownRef = useRef(null);
   const [modal, setModal] = useState(null);
+
+  const JSONBIN_ID = "69f4b99e36566621a81344ee";
+  const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
+
+  // Load full state from JSONbin on mount
+  React.useEffect(()=>{
+    fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
+      headers: { "X-Master-Key": JSONBIN_KEY }
+    })
+    .then(r=>r.json())
+    .then(data=>{
+      const record = data.record;
+      if(record.words && record.words.length > 0){
+        const loaded = record.words;
+        setWords([...loaded, ...Array(Math.max(0,20-loaded.length)).fill("")]);
+      }
+      if(record.grade) setSelectedGrade(record.grade);
+      // Restore mid-game progress
+      if(record.phase === "game" && record.shuffled && record.shuffled.length > 0){
+        setShuffled(record.shuffled);
+        setIdx(record.wordIdx || 0);
+        setResults(record.results || []);
+        setTries(record.tries || 0);
+        setPhase("game");
+        setTimeout(()=>showToast("▶ Resuming your game from word "+(record.wordIdx+1)+"!","success"),500);
+      }
+    })
+    .catch(()=>{});
+  },[]);
+
+  // Save words to JSONbin whenever words or grade change
+  const saveTimeoutRef = React.useRef(null);
+  React.useEffect(()=>{
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(()=>{
+      fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_KEY },
+        body: JSON.stringify({ words: words.map(w=>w.trim()), grade: selectedGrade, phase, shuffled, wordIdx: idx, results, tries })
+      }).catch(()=>{});
+    }, 1500);
+  },[words, selectedGrade]);
+
 
   const gradeWords = {
     5: ["absence","achieve","adequate","apparent","arithmetic","bargain","calendar","candidate","cemetery","committee","conscience","deceive","definite","desperate","embarrass","environment","existence","fascinating","government","guarantee","happened","heroes","imaginary","immediately","independent","interrupt","island","judgment","knowledge","library","lightning","literature","lonely","medicine","medieval","minimum","miscellaneous","mysterious","necessary","neighbor","occasion","opinion","opposite","original","parallel","patience","permanent","physical","pleasant","possession","prairie","precious","prejudice","presence","privilege","probably","procedure","pronunciation","protein","purchase","purpose","quantity","quarter","question","realize","receive","recognize","recommend","reference","relief","remember","repetition","restaurant","rhythm","sacrifice","schedule","science","secretary","sentence","separate","several","signature","similar","sincerely","situation","solution","sometimes","stomach","straight","strength","studying","succeed","suggestion","surprise","syllable","symbol","temperature","therefore","thorough","thought","thousand","tomorrow","tongue","tragedy","trouble","truly","typical","usually","valuable","vegetable","volunteer","Wednesday","weight","weird","wonderful","written","yesterday","accurate","adventure","although","ancient","angle","announce","answer","appear","approach","article","attention","audience","average","balance","beautiful","because","believe","belong","beneath","beside","between","bicycle","boundary","breathe","bridge","brought","building","business","careful","castle","caught","ceiling","center","certain","chance","character","charge","children","choice","choose","circle","citizen","climate","clothes","college","column","common","company","compare","complete","connect","contain","continue","correct","cotton","country","couple","create","crime","culture","damage","daughter","decide","describe","desert","design","detail","develop","difference","difficult","discover","distance","divide","dollar","double","dream","during","early","easily","effect","effort","either","empty"],
@@ -355,31 +419,7 @@ function Game() {
   const showToast = (msg, type="success") => {
     setToast({msg,type});
     setTimeout(()=>setToast(null), 2800);
-  };
-
-  const saveWords = () => {
-    const blob = new Blob([JSON.stringify({spellForceWords:words.map(w=>w.trim())},null,2)],{type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href=url; a.download="spelling-words.json"; a.click();
-    URL.revokeObjectURL(url);
-    showToast("✅ Words saved as spelling-words.json!");
-  };
-
-  const loadWords = (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        const loaded = Array.isArray(data.spellForceWords) ? data.spellForceWords : [];
-        if(!loaded.length){ showToast("❌ No words found in file!","error"); return; }
-        setSelectedGrade(null); setWords([...loaded,...Array(20).fill("")].slice(0,18));
-        showToast("✅ Loaded " + loaded.filter(Boolean).length + " words!");
-      } catch { showToast("❌ Invalid file.","error"); }
-    };
-    reader.readAsText(file);
+  };    reader.readAsText(file);
     e.target.value="";
   };
 
@@ -464,14 +504,18 @@ function Game() {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
       setResults(r=>[...r,{word,ok:true}]);
+      setCountdown(2);
+      let c=2; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
       setTimeout(()=>advance(shuffled,idx), 2300);
     } else if(tries===0) {
       setFeedback("try"); setTries(1);
-      setTimeout(()=>{ setFeedback(null); setAnswer(""); inputRef.current?.focus(); },1900);
+      setTimeout(()=>{ clearInterval(countdownRef.current); setCountdown(null); setFeedback(null); setAnswer(""); inputRef.current?.focus(); },1900);
     } else {
       doFlash("red"); triggerBgGlow("wrong");
       setFeedback("wrong");
       setResults(r=>[...r,{word,ok:false}]);
+      setCountdown(8);
+      let cw=8; countdownRef.current=setInterval(()=>{ cw--; if(cw<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(cw);} },1000);
       setTimeout(()=>advance(shuffled,idx), 8000);
     }
   };
@@ -507,25 +551,20 @@ function Game() {
       {/* ══ SETUP ══ */}
       {phase==="setup" && (
         <div className="card" style={{maxHeight:"calc(100vh - 80px)",overflowY:"auto",marginBottom:"24px"}}>
-          <div className="file-row">
-            <button className="badge badge-save" onClick={saveWords}>💾 Save Words</button>
-            <button className="badge badge-load" onClick={()=>document.getElementById("fileInput").click()}>📂 Load Words</button>
-          </div>
-          
           <div style={{marginBottom:'12px'}}>
             <div style={{fontSize:'0.7rem',letterSpacing:'3px',color:'rgba(255,255,255,0.55)',textTransform:'uppercase',textAlign:'center',marginBottom:'8px',fontWeight:700}}>Auto-Fill by Grade</div>
             <div style={{display:'flex',gap:'8px',justifyContent:'center',flexWrap:'wrap'}}>
               {[5,6,7,8].map(g=>(
                 <button key={g} onClick={()=>populateGrade(g)} style={{
-                  background: selectedGrade===g ? 'linear-gradient(135deg,#00c853,#00e676)' : 'linear-gradient(135deg,rgba(255,45,120,0.2),rgba(191,95,255,0.2))',
-                  border: selectedGrade===g ? '1px solid #00e676' : '1px solid rgba(255,45,120,0.4)',
+                  background: selectedGrade===g ? 'linear-gradient(135deg,rgba(0,200,83,0.3),rgba(0,230,118,0.3))' : 'linear-gradient(135deg,rgba(255,45,120,0.2),rgba(191,95,255,0.2))',
+                  border: selectedGrade===g ? '1px solid rgba(0,230,118,0.6)' : '1px solid rgba(255,45,120,0.4)',
                   borderRadius:'20px',padding:'6px 16px',
-                  color: selectedGrade===g ? '#000' : '#fff',
+                  color: '#fff',
                   fontWeight:700,fontSize:'0.8rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s',
-                  boxShadow: selectedGrade===g ? '0 0 12px rgba(0,230,118,0.6)' : 'none'
+                  boxShadow: selectedGrade===g ? '0 0 10px rgba(0,230,118,0.35)' : 'none'
                 }}
-                  onMouseOver={e=>{if(selectedGrade!==g){e.currentTarget.style.background='linear-gradient(135deg,#00c853,#00e676)';e.currentTarget.style.color='#000';e.currentTarget.style.boxShadow='0 0 12px rgba(0,230,118,0.6)';}}}
-                  onMouseOut={e=>{if(selectedGrade!==g){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.2),rgba(191,95,255,0.2))';e.currentTarget.style.color='#fff';e.currentTarget.style.boxShadow='none';}}}>
+                  onMouseOver={e=>{if(selectedGrade!==g){e.currentTarget.style.background='linear-gradient(135deg,rgba(0,200,83,0.3),rgba(0,230,118,0.3))';e.currentTarget.style.color='#fff';e.currentTarget.style.boxShadow='0 0 10px rgba(0,230,118,0.35)';}}}
+                  onMouseOut={e=>{if(selectedGrade!==g){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.2),rgba(191,95,255,0.2))';e.currentTarget.style.boxShadow='none';}}}>
                   {selectedGrade===g ? '✓ ' : ''}Grade {g}
                 </button>
               ))}
@@ -601,7 +640,7 @@ function Game() {
               </div>
               <div style={{display:"flex",gap:"18px",justifyContent:"center",marginTop:"12px",position:"relative",zIndex:1,alignItems:"center"}}>
                 <span style={{display:"flex",alignItems:"center",gap:"6px",fontSize:".72rem",fontWeight:800,color:"rgba(0,255,136,.7)",letterSpacing:"1.5px"}}>
-                  <span style={{width:"11px",height:"11px",borderRadius:"50%",background:"rgba(0,255,136,.7)",display:"inline-block",flexShrink:0}}></span>CORRECT
+                  <span style={{width:"11px",height:"11px",borderRadius:"50%",background:"rgba(0,255,136,.7)",display:"inline-block",flexShrink:0}}></span>CORRECT {countdown!==null && <span style={{fontSize:'1.4rem',fontWeight:900,color:'#FFD700',marginLeft:'8px'}}>{countdown}</span>}
                 </span>
                 <span style={{display:"flex",alignItems:"center",gap:"6px",fontSize:".72rem",fontWeight:800,color:"rgba(200,80,80,.9)",letterSpacing:"1.5px"}}>
                   <span style={{width:"11px",height:"11px",borderRadius:"50%",background:"rgba(200,60,60,.8)",display:"inline-block",flexShrink:0}}></span>INCORRECT
@@ -635,6 +674,7 @@ function Game() {
               <div className="ov-big">✗ Incorrect</div>
               <div className="ov-sub">The correct spelling was:</div>
               <div className="ov-reveal">{shuffled[idx]}</div>
+              {countdown!==null && <div style={{fontSize:"2.5rem",fontWeight:900,color:"rgba(255,100,100,0.9)",marginTop:"8px",letterSpacing:"2px"}}>{countdown}</div>}
               <div className="ov-sub" style={{marginTop:6,color:"rgba(200,80,80,.55)"}}>Keep practicing — you'll get it next time!</div>
             </div>
           )}
