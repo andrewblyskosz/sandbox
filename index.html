@@ -325,6 +325,42 @@ function Game() {
   const [toast,     setToast]     = useState(null);
   const inputRef = useRef(null);
 
+  const JSONBIN_ID = "69f4b99e36566621a81344ee";
+  const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
+  const loadedRef = useRef(false);
+  const saveTimerRef = useRef(null);
+
+  // ── Load on mount ──
+  useEffect(()=>{
+    fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
+      headers:{"X-Master-Key":JSONBIN_KEY}
+    })
+    .then(r=>r.json())
+    .then(data=>{
+      const rec = data.record;
+      if(rec && rec.words && rec.words.length>0){
+        setWords([...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")]);
+      }
+      if(rec && rec.grade) setSelectedGrade(rec.grade);
+    })
+    .catch(()=>{})
+    .finally(()=>{ loadedRef.current=true; });
+  },[]);
+
+  // ── Save on change (debounced, only after load) ──
+  useEffect(()=>{
+    if(!loadedRef.current) return;
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(()=>{
+      fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
+        body:JSON.stringify({words:words.map(w=>w.trim()),grade:selectedGrade})
+      }).catch(()=>{});
+    },1500);
+  },[words,selectedGrade]);
+
+
   const [hints,         setHints]        = useState(0);
   const [totalHints,    setTotalHints]   = useState(0);
   const [selectedGrade, setSelectedGrade]= useState(null);
