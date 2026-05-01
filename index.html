@@ -332,7 +332,7 @@ function Game() {
 
   // Load on mount
   useEffect(()=>{
-    fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
+    fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest?meta=false",{
       headers:{"X-Master-Key":JSONBIN_KEY}
     })
     .then(r=>r.json())
