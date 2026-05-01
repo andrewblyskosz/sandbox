@@ -371,12 +371,15 @@ function Game() {
         setTimeout(()=>showToast("▶ Resuming your game from word "+(record.wordIdx+1)+"!","success"),500);
       }
     })
-    .catch(()=>{});
+    .catch(()=>{ loadedRef.current = true; });
+    loadedRef.current = true;
   },[]);
 
   // Save words to JSONbin whenever words or grade change
   const saveTimeoutRef = React.useRef(null);
+  const loadedRef = React.useRef(false);
   React.useEffect(()=>{
+    if(!loadedRef.current) return;
     clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(()=>{
       fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
@@ -385,7 +388,7 @@ function Game() {
         body: JSON.stringify({ words: words.map(w=>w.trim()), grade: selectedGrade, phase, shuffled, wordIdx: idx, results, tries })
       }).catch(()=>{});
     }, 1500);
-  },[words, selectedGrade]);
+  },[words, selectedGrade, phase, idx, results, tries]);
 
 
   const gradeWords = {
