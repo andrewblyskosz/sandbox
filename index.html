@@ -564,9 +564,9 @@ function Game() {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
       setResults(r=>[...r,{word,ok:true}]);
-      setCountdown(5);
-      let c=5; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
-      setTimeout(()=>advance(shuffled,idx), 5000);
+      setCountdown(1);
+      let c=1; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
+      setTimeout(()=>advance(shuffled,idx), 1900);
     } else if(tries===0) {
       setFeedback("try"); setTries(1);
       setTimeout(()=>{ setFeedback(null); setAnswer(""); setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50); },1900);
