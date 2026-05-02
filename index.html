@@ -329,8 +329,10 @@ function Game() {
   const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
   const saveTimerRef = useRef(null);
   const isSaving = useRef(false);
+  const loadedRef = useRef(false);
 
   const jbSave = (overrides={}) => {
+    if(!loadedRef.current){ console.log("Save blocked - still loading"); return; }
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
       if(isSaving.current) return;
@@ -383,7 +385,8 @@ function Game() {
         setTimeout(()=>setToast({msg:"▶ Resuming from word "+((rec.wordIdx||0)+1)+"!",type:"success"}),300); setTimeout(()=>setToast(null),3100);
       }
     })
-    .catch(e=>console.error("Load failed:",e));
+    .catch(e=>console.error("Load failed:",e))
+    .finally(()=>{ loadedRef.current=true; console.log("Load complete - saves now enabled"); });
   };
 
   // Load once on mount
