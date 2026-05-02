@@ -766,7 +766,7 @@ function Game() {
 
           <div className="speak-section">
             <div className="speak-hint">👂 Listen carefully, then spell the word!</div>
-            <button className={"btn btn-speak "+(speaking?"pulsing":"")} onClick={()=>speak(shuffled[idx])}>
+            <button className={"btn btn-speak "+(speaking?"pulsing":"")} onClick={()=>{ speak(shuffled[idx]); setTimeout(()=>{ if(inputRef.current) inputRef.current.focus(); },100); }}>
               {speaking?"🔊  LISTENING...":"🔊  HEAR THE WORD"}
             </button>
           </div>
@@ -835,8 +835,8 @@ function Game() {
               <div className="modal-title">ℹ️ About</div>
               <div className="modal-body">
                 <p style={{marginBottom:16}}>
-                  <strong style={{color:"#FFD700",fontSize:"1.05rem"}}>Hunter — Word Slayer</strong><br/>
-                  <span style={{color:"rgba(255,255,255,.6)",fontSize:".85rem"}}>Spelling Game by Andrew Blyskosz &nbsp;·&nbsp; © 2026 &nbsp;·&nbsp; Version 1.0</span>
+                  <strong style={{color:"#FFD700",fontSize:"1.05rem"}}>Hunter — Word Spell</strong><br/>
+                  <span style={{color:"rgba(255,255,255,.6)",fontSize:".85rem"}}>Andrew Blyskosz &nbsp;·&nbsp; © 2026 &nbsp;·&nbsp; Version 2.0</span>
                 </p>
                 <p style={{marginBottom:8,color:"rgba(255,255,255,.5)",fontSize:".8rem",letterSpacing:"1px",textTransform:"uppercase",fontWeight:800}}>Support the developer</p>
                 <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
@@ -867,7 +867,7 @@ function Game() {
                   <li>Your words load automatically — or pick a <strong style={{color:"#00e676"}}>Grade</strong> to auto-fill 20 random words for that level.</li>
                   <li>Hit <strong style={{color:"#FF2D78"}}>✨ Let's Spell!</strong> when you're ready to start.</li>
                   <li>Press <strong style={{color:"#00F5FF"}}>🔊 Hear the Word</strong> to listen, then type your answer and hit <strong style={{color:"#FF2D78"}}>⚡ Submit</strong>.</li>
-                  <li>You get <strong>2 tries</strong> per word. Stuck? Tap <strong style={{color:"#FFD700"}}>💡 Hint</strong> to reveal the first or second letter (max 2 hints per word).</li>
+                  <li>You get <strong>2 tries</strong> per word. Stuck? Tap <strong style={{color:"#FFD700"}}>💡 Hint</strong> to reveal the next hidden letter (max 2 hints per word).</li>
                   <li>After each word, the correct spelling is shown for <strong>5 seconds</strong> so you can review it.</li>
                   <li>Your progress saves automatically — come back anytime and pick up right where you left off!</li>
                   <li>At the end, use <strong style={{color:"#FF7777"}}>🔁 Redo Wrong Words</strong> to drill the ones you missed.</li>
