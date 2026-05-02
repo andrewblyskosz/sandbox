@@ -563,7 +563,7 @@ function Game() {
 
       {/* ══ SETUP ══ */}
       {phase==="setup" && (
-        <div className="card" style={{maxHeight:"calc(100vh - 60px)",overflowY:"auto",marginBottom:"24px"}}>
+        <div className="card" style={{maxHeight:"calc(100vh - 50px)",overflowY:"auto",marginBottom:"24px"}}>
           <div style={{marginBottom:'12px'}}>
             <div style={{fontSize:'0.7rem',letterSpacing:'3px',color:'rgba(255,255,255,0.55)',textTransform:'uppercase',textAlign:'center',marginBottom:'8px',fontWeight:700}}>Auto-Fill by Grade</div>
             <div style={{display:'flex',gap:'8px',justifyContent:'center',flexWrap:'wrap'}}>
@@ -815,8 +815,7 @@ function Game() {
                   <li>You get <strong>2 tries</strong> per word. Stuck? Tap <strong style={{color:"#FFD700"}}>💡 Hint</strong> to reveal the first or second letter (max 2 hints per word).</li>
                   <li>After each word, the correct spelling is shown for <strong>5 seconds</strong> so you can review it.</li>
                   <li>Your progress saves automatically — come back anytime and pick up right where you left off!</li>
-                  <li>At the end, your score is shown in red and green. Use <strong style={{color:"#FF7777"}}>🔁 Redo Wrong Words</strong> to drill the ones you missed.</li>
-                  <li>Save your word list with 💾 and reload it anytime with 📂.</li>
+                  <li>At the end, use <strong style={{color:"#FF7777"}}>🔁 Redo Wrong Words</strong> to drill the ones you missed.</li>
                 </ol>
               </div>
             </>}
