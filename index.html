@@ -569,7 +569,7 @@ function Game() {
       setTimeout(()=>advance(shuffled,idx), 5000);
     } else if(tries===0) {
       setFeedback("try"); setTries(1);
-      setTimeout(()=>{ setFeedback(null); setAnswer(""); inputRef.current?.focus(); },1900);
+      setTimeout(()=>{ setFeedback(null); setAnswer(""); setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50); },1900);
     } else {
       doFlash("red"); triggerBgGlow("wrong");
       setFeedback("wrong");
