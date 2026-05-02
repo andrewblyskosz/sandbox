@@ -297,7 +297,7 @@ a[href="index.html"]:hover{transform:translateY(-2px) scale(1.06) !important;bac
 </div>
 <div id="bg-glow"></div>
 <div id="app"></div>
-<input id="fileInput" type="file" accept=".json" style="display:none"/>
+
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -439,32 +439,6 @@ function Game() {
     setTimeout(()=>setToast(null), 2800);
   };
 
-  const saveWords = () => {
-    const blob = new Blob([JSON.stringify({spellForceWords:words.map(w=>w.trim())},null,2)],{type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href=url; a.download="spelling-words.json"; a.click();
-    URL.revokeObjectURL(url);
-    showToast("✅ Words saved as spelling-words.json!");
-  };
-
-  const loadWords = (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        const loaded = Array.isArray(data.spellForceWords) ? data.spellForceWords : [];
-        if(!loaded.length){ showToast("❌ No words found in file!","error"); return; }
-        setWords([...loaded,...Array(20).fill("")].slice(0,18));
-        showToast("✅ Loaded " + loaded.filter(Boolean).length + " words!");
-      } catch { showToast("❌ Invalid file.","error"); }
-    };
-    reader.readAsText(file);
-    e.target.value="";
-  };
-
   const speak = useCallback((word) => {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(word);
@@ -546,9 +520,9 @@ function Game() {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
       setResults(r=>[...r,{word,ok:true}]);
-      setCountdown(1);
-      let c=1; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
-      setTimeout(()=>advance(shuffled,idx), 1500);
+      setCountdown(5);
+      let c=5; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
+      setTimeout(()=>advance(shuffled,idx), 5000);
     } else if(tries===0) {
       setFeedback("try"); setTries(1);
       setTimeout(()=>{ setFeedback(null); setAnswer(""); inputRef.current?.focus(); },1900);
@@ -592,12 +566,7 @@ function Game() {
 
       {/* ══ SETUP ══ */}
       {phase==="setup" && (
-        <div className="card" style={{maxHeight:"calc(100vh - 80px)",overflowY:"auto",marginBottom:"24px"}}>
-          <div className="file-row">
-            <button className="badge badge-save" onClick={saveWords}>💾 Save Words</button>
-            <button className="badge badge-load" onClick={()=>document.getElementById("fileInput").click()}>📂 Load Words</button>
-          </div>
-          
+        <div className="card" style={{maxHeight:"calc(100vh - 60px)",overflowY:"auto",marginBottom:"24px"}}>
           <div style={{marginBottom:'12px'}}>
             <div style={{fontSize:'0.7rem',letterSpacing:'3px',color:'rgba(255,255,255,0.55)',textTransform:'uppercase',textAlign:'center',marginBottom:'8px',fontWeight:700}}>Auto-Fill by Grade</div>
             <div style={{display:'flex',gap:'8px',justifyContent:'center',flexWrap:'wrap'}}>
@@ -843,11 +812,13 @@ function Game() {
               <div className="modal-title">❓ How to Play</div>
               <div className="modal-body">
                 <ol>
-                  <li>Type your spelling words into the boxes — enter as many or as few as you have.</li>
-                  <li>Hit <strong style={{color:"#FF2D78"}}>Begin the Battle</strong> when you're ready.</li>
-                  <li>Press <strong style={{color:"#00F5FF"}}>🔊 Hear the Word</strong> to listen to the word being spoken.</li>
-                  <li>Type your answer and hit <strong style={{color:"#FF2D78"}}>Submit</strong> — you get <strong>2 tries</strong> per word.</li>
-                  <li>Your score is shown at the end. Use <strong style={{color:"#FF7777"}}>🔁 Redo Wrong Words</strong> to drill the ones you missed.</li>
+                  <li>Your words load automatically — or pick a <strong style={{color:"#00e676"}}>Grade</strong> to auto-fill 20 random words for that level.</li>
+                  <li>Hit <strong style={{color:"#FF2D78"}}>✨ Let's Spell!</strong> when you're ready to start.</li>
+                  <li>Press <strong style={{color:"#00F5FF"}}>🔊 Hear the Word</strong> to listen, then type your answer and hit <strong style={{color:"#FF2D78"}}>⚡ Submit</strong>.</li>
+                  <li>You get <strong>2 tries</strong> per word. Stuck? Tap <strong style={{color:"#FFD700"}}>💡 Hint</strong> to reveal the first or second letter (max 2 hints per word).</li>
+                  <li>After each word, the correct spelling is shown for <strong>5 seconds</strong> so you can review it.</li>
+                  <li>Your progress saves automatically — come back anytime and pick up right where you left off!</li>
+                  <li>At the end, your score is shown in red and green. Use <strong style={{color:"#FF7777"}}>🔁 Redo Wrong Words</strong> to drill the ones you missed.</li>
                   <li>Save your word list with 💾 and reload it anytime with 📂.</li>
                 </ol>
               </div>
