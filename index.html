@@ -559,7 +559,7 @@ function Game() {
       if(hintedPos.includes(i)) return letter;
       return answer[i]||'';
     }).join('');
-    const ok = fullAnswer.toLowerCase()===word.toLowerCase() && !fullAnswer.includes('');
+    const ok = fullAnswer.toLowerCase()===word.toLowerCase();
     if(ok) {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
@@ -680,13 +680,7 @@ function Game() {
 
           <button className="btn btn-start" onClick={startGame}><span>✨</span><span>LET'S SPELL!</span><span>✨</span></button>
 
-          {/* How to Play + About — small, under begin button */}
-          <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
-            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('howto')}>❓ How to Play</button>
-            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('about')}>ℹ️ About</button>
-          </div>
-
-          {results.length > 0 && (
+                    {results.length > 0 && (
             <>
               <div style={{display:"flex",gap:"10px",marginTop:"12px",position:"relative",zIndex:1}}>
                 <button className="btn" style={{
@@ -888,3 +882,9 @@ ReactDOM.createRoot(document.getElementById("app")).render(<Game/>);
 
 </body>
 </html>
+
+          {/* How to Play + About — small, under begin button */}
+          <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
+            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('howto')}>❓ How to Play</button>
+            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('about')}>ℹ️ About</button>
+          </div>
