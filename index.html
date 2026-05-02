@@ -102,7 +102,7 @@ body::before{
 .btn:active{transform:scale(.95)!important;}
 .btn-start{background:linear-gradient(135deg,#FF2D78,#FF6B00);color:#fff;font-size:1rem;padding:8px 20px;width:100%;box-shadow:0 4px 28px rgba(255,45,120,.5);position:relative;z-index:1;}
 .btn-start:hover{transform:translateY(-2px);box-shadow:0 6px 36px rgba(255,45,120,.7);}
-.btn-speak{background:linear-gradient(135deg,#7B2FFF,#00C4DD);color:#fff;font-size:1rem;padding:12px 20px;box-shadow:0 4px 20px rgba(123,47,255,.4);width:100%;}
+.btn-speak{background:linear-gradient(135deg,#7B2FFF,#00C4DD);color:#fff;font-size:1rem;padding:12px 28px;box-shadow:0 4px 20px rgba(123,47,255,.4);width:auto;display:inline-flex;align-items:center;gap:8px;}
 .btn-speak:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(0,245,255,.5);}
 .btn-speak.pulsing{animation:speak-pulse .55s ease-in-out infinite alternate;}
 @keyframes speak-pulse{from{box-shadow:0 4px 20px rgba(0,245,255,.3);}to{box-shadow:0 4px 42px rgba(0,245,255,.75);transform:scale(1.02);}}
@@ -469,7 +469,7 @@ function Game() {
       if(!answer[i] && !hintedPos.includes(i)){ hintPos=i; break; }
     }
     if(hintPos>=0) setHintedPos(p=>[...p,hintPos]);
-    if(inputRef.current) inputRef.current.focus();
+    setTimeout(()=>{ if(inputRef.current) inputRef.current.focus(); },10);
   }
  // null | 'about' | 'howto'
 
