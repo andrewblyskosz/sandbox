@@ -376,10 +376,10 @@ function Game() {
       console.log("Step 4 - setting grade:",rec.grade);
       if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
       console.log("Step 5 - done");
+      if(rec.results && rec.results.length>0) setResults(rec.results);
       if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
         setShuffled(rec.shuffled);
         setIdx(rec.wordIdx||0);
-        setResults(rec.results||[]);
         setTries(rec.tries||0);
         setPhase("game");
         setTimeout(()=>setToast({msg:"▶ Resuming from word "+((rec.wordIdx||0)+1)+"!",type:"success"}),300); setTimeout(()=>setToast(null),3100);
@@ -556,7 +556,7 @@ function Game() {
     } else {
       doFlash("red"); triggerBgGlow("wrong");
       setFeedback("wrong");
-      setResults(r=>[...r,{word,ok:false}]);
+      setResults(r=>{ const nr=[...r,{word,ok:false}]; setTimeout(()=>jbSave({results:nr,wordIdx:idx}),200); return nr; });
       setCountdown(2);
       let cw=2; countdownRef.current=setInterval(()=>{ cw--; if(cw<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(cw);} },1000);
       setTimeout(()=>advance(shuffled,idx), 2000);
