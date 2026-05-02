@@ -550,9 +550,6 @@ function Game() {
     // Pre-load voices so they're ready on first button press
     window.speechSynthesis.getVoices();
     window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    const el = document.getElementById("fileInput");
-    el.addEventListener("change", loadWords);
-    return ()=>el.removeEventListener("change", loadWords);
   },[]);
 
   return (
