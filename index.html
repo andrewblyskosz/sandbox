@@ -817,8 +817,8 @@ function Game() {
             ))}
           </div>
           {totalHints>0&&(<div style={{textAlign:"center",margin:"10px 0",fontSize:"0.85rem",color:"rgba(255,215,0,0.8)",letterSpacing:"1px",fontWeight:700}}>💡 Hints used: {totalHints}</div>)}
-          <div className="results-btns">
-            <button className="btn btn-replay" onClick={playAgain}>⚡ TRAIN AGAIN!</button>
+          <div className="results-btns" style={{justifyContent: score===total ? 'center' : 'flex-start'}}>
+            {score < total && <button className="btn btn-replay" onClick={playAgain}>⚡ TRAIN AGAIN!</button>}
             <button className="btn btn-secondary" onClick={()=>setPhase("setup")}>🏠 Home</button>
           </div>
         </div>
