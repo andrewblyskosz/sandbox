@@ -531,7 +531,7 @@ function Game() {
     const next = i+1;
     if(next >= sArr.length){ setPhase("results"); setFeedback(null); jbSave({phase:"results"}); }
     else {
-      setIdx(next); setTries(0); setAnswer(""); setFeedback(null);
+      setIdx(next); setTries(0); setAnswer(""); setHints(0); setHintedPos([]); setFeedback(null);
       setFeedback(null); setTimeout(()=>inputRef.current?.focus(), 100);
     }
   };
@@ -543,7 +543,7 @@ function Game() {
     const skipped = shuffled[idx];
     const newShuffled = [...shuffled.slice(0, idx), ...shuffled.slice(idx + 1), skipped];
     setShuffled(newShuffled);
-    setTries(0); setAnswer("");
+    setTries(0); setAnswer(""); setHints(0); setHintedPos([]);
     // If we just moved the last remaining word to the end, idx stays valid
     if(idx >= newShuffled.length - 1 && newShuffled.length > 1){
       setIdx(newShuffled.length - 2 < 0 ? 0 : idx);
