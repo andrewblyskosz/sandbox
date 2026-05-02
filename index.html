@@ -116,7 +116,7 @@ body::before{
 .btn-row{display:flex;gap:8px;position:relative;z-index:1;}
 
 /* ── SPEAK ── */
-.speak-section{text-align:center;margin-bottom:14px;position:relative;z-index:1;}
+.speak-section{text-align:center;margin-bottom:14px;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
 .speak-hint{font-size:.68rem;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:10px;}
 
 /* ── ANSWER INPUT ── */
@@ -281,33 +281,38 @@ body::before{
 
 /* ── LETTER INPUT DISPLAY ── */
 .answer-box{
-  background:rgba(255,255,255,.05);
+  background:rgba(10,10,30,0.6);
   border:2px solid rgba(255,45,120,.45);
   border-radius:12px;
-  padding:12px 14px;
+  padding:14px 12px;
   width:100%;cursor:text;
   display:flex;align-items:center;justify-content:center;
-  min-height:60px;
+  min-height:64px;
   position:relative;
   margin-bottom:12px;
 }
-.letter-display{
-  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
-}
+.letter-display{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
 .letter-cell{
-  display:flex;flex-direction:column;align-items:center;
-  min-width:22px;
+  width:36px;height:42px;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;font-weight:900;font-family:'Nunito',sans-serif;
+  transition:all .15s;
 }
-.letter-char{
-  font-size:1.4rem;font-weight:900;color:rgba(255,255,255,0.3);
-  line-height:1.2;letter-spacing:0;
+.letter-cell-empty{
+  background:rgba(0,180,80,0.2);
+  border:1.5px solid rgba(0,200,90,0.5);
+  color:#FFD700;
 }
-.letter-cell.filled .letter-char{color:#fff;}
-.letter-underline{
-  width:100%;height:2px;
-  background:rgba(255,45,120,0.5);
-  border-radius:1px;
-  margin-top:2px;
+.letter-cell-typed{
+  background:rgba(30,30,60,0.9);
+  border:1.5px solid rgba(255,255,255,0.25);
+  color:#fff;
+}
+.letter-cell-hint{
+  background:rgba(255,215,0,0.18);
+  border:1.5px solid rgba(255,215,0,0.7);
+  color:#FFD700;
 }
 .answer-input-hidden{
   position:absolute;opacity:0;width:1px;height:1px;
@@ -426,6 +431,7 @@ function Game() {
 
 
   const [hints,         setHints]        = useState(0);
+  const [hintedPos,     setHintedPos]    = useState([]);
   const [totalHints,    setTotalHints]   = useState(0);
   const [selectedGrade, setSelectedGrade]= useState(null);
   const [resumeData,     setResumeData]    = useState(null);
@@ -457,7 +463,12 @@ function Game() {
     const newHints=hints+1;
     setHints(newHints);
     setTotalHints(t=>t+1);
-    setAnswer(word.slice(0,newHints));
+    // Find next untyped position to hint
+    let hintPos = -1;
+    for(let i=0;i<word.length;i++){
+      if(!answer[i] && !hintedPos.includes(i)){ hintPos=i; break; }
+    }
+    if(hintPos>=0) setHintedPos(p=>[...p,hintPos]);
     if(inputRef.current) inputRef.current.focus();
   }
  // null | 'about' | 'howto'
@@ -543,7 +554,12 @@ function Game() {
   const submit = () => {
     if(!answer.trim()||feedback) return;
     const word = shuffled[idx];
-    const ok = answer.trim().toLowerCase()===word.toLowerCase();
+    // Build full answer merging typed + hinted letters
+    const fullAnswer = Array.from(word).map((letter,i)=>{
+      if(hintedPos.includes(i)) return letter;
+      return answer[i]||'';
+    }).join('');
+    const ok = fullAnswer.toLowerCase()===word.toLowerCase() && !fullAnswer.includes('');
     if(ok) {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
@@ -657,7 +673,7 @@ function Game() {
           {/* Clear all words */}
           <div style={{textAlign:"center",marginBottom:"10px"}}>
             <button className="btn btn-secondary" style={{fontSize:"0.85rem",padding:"7px 20px"}}
-              onClick={()=>{ setWords(Array(20).fill("")); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null); }}>
+              onClick={()=>{ setWords(Array(20).fill("")); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null); setHintedPos([]); }}>
               ✕ Clear All Words
             </button>
           </div>
@@ -682,7 +698,7 @@ function Game() {
                   const wrongWords = results.filter(r=>!r.ok).map(r=>r.word);
                   if(!wrongWords.length) return;
                   const s=[...wrongWords].sort(()=>Math.random()-.5);
-                  setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null);
+                  setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null); setHintedPos([]);
                   setAnswer(""); setFeedback(null); setPhase("game");
                 }}>
                   🔁 REDO WRONG WORDS
@@ -757,12 +773,13 @@ function Game() {
 
           <div className="answer-box" onClick={()=>inputRef.current&&inputRef.current.focus()}>
             <div className="letter-display">
-              {shuffled[idx] && Array.from(shuffled[idx]).map((letter,i)=>(
-                <div key={i} className={"letter-cell"+(answer[i]?" filled":"")}>
-                  <span className="letter-char">{answer[i] || ""}</span>
-                  {!answer[i] && <span className="letter-underline"/>}
-                </div>
-              ))}
+              {shuffled[idx] && Array.from(shuffled[idx]).map((letter,i)=>{
+                const isHinted = hintedPos.includes(i);
+                const typedChar = answer[i];
+                if(isHinted) return <div key={i} className="letter-cell letter-cell-hint">{letter}</div>;
+                if(typedChar) return <div key={i} className="letter-cell letter-cell-typed">{typedChar}</div>;
+                return <div key={i} className="letter-cell letter-cell-empty">?</div>;
+              })}
             </div>
             <input ref={inputRef} className="answer-input-hidden"
               value={answer} onChange={e=>setAnswer(e.target.value)}
