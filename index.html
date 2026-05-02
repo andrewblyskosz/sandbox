@@ -346,6 +346,7 @@ function Game() {
         results,
         tries
       }, overrides);
+      console.log("Saving results:",payload.results,"grade:",payload.grade);
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
@@ -376,6 +377,7 @@ function Game() {
       console.log("Step 4 - setting grade:",rec.grade);
       if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
       console.log("Step 5 - done");
+      console.log("Restoring results:",rec.results);
       if(rec.results && rec.results.length>0) setResults(rec.results);
       if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
         setShuffled(rec.shuffled);
