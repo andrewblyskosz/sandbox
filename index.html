@@ -759,7 +759,7 @@ function Game() {
             <div className="letter-display">
               {shuffled[idx] && Array.from(shuffled[idx]).map((letter,i)=>(
                 <div key={i} className={"letter-cell"+(answer[i]?" filled":"")}>
-                  <span className="letter-char">{answer[i] || "_"}</span>
+                  <span className="letter-char">{answer[i] || ""}</span>
                   {!answer[i] && <span className="letter-underline"/>}
                 </div>
               ))}
