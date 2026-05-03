@@ -340,7 +340,12 @@ const { useState, useRef, useCallback, useEffect } = React;
 
 function Game() {
   const [phase,     setPhase]     = useState("setup");
-  const [words,     setWords]     = useState(Array(20).fill(""));
+  const [words,     setWords]     = useState([
+    "ancient","rhythm","separate","necessary","beautiful",
+    "calendar","February","library","privilege","guarantee",
+    "immediately","embarrass","occurrence","conscience","perseverance",
+    "recommend","soldier","Wednesday","lightning","environment"
+  ]);
   const [shuffled,  setShuffled]  = useState([]);
   const [idx,       setIdx]       = useState(0);
   const [answer,    setAnswer]    = useState("");
@@ -367,6 +372,7 @@ function Game() {
       isSaving.current = true;
       const payload = Object.assign({
         words: words.map(w=>w.trim()),
+        grade: selectedGrade,
         phase,
         shuffled,
         wordIdx: idx,
@@ -427,10 +433,29 @@ function Game() {
   const [hints,         setHints]        = useState(0);
   const [hintedPos,     setHintedPos]    = useState([]);
   const [totalHints,    setTotalHints]   = useState(0);
+  const [selectedGrade, setSelectedGrade]= useState(null);
   const [resumeData,     setResumeData]    = useState(null);
   const [countdown,     setCountdown]    = useState(null);
   const countdownRef = useRef(null);
   const [modal, setModal] = useState(null);
+
+  const gradeWords = {
+    5: ["absence","achieve","adequate","apparent","arithmetic","bargain","calendar","candidate","cemetery","committee","conscience","deceive","definite","desperate","embarrass","environment","existence","fascinating","government","guarantee","happened","heroes","imaginary","immediately","independent","interrupt","island","judgment","knowledge","library","lightning","literature","lonely","medicine","medieval","minimum","miscellaneous","mysterious","necessary","neighbor","occasion","opinion","opposite","original","parallel","patience","permanent","physical","pleasant","possession","prairie","precious","prejudice","presence","privilege","probably","procedure","pronunciation","protein","purchase","purpose","quantity","quarter","question","realize","receive","recognize","recommend","reference","relief","remember","repetition","restaurant","rhythm","sacrifice","schedule","science","secretary","sentence","separate","several","signature","similar","sincerely","situation","solution","sometimes","stomach","straight","strength","studying","succeed","suggestion","surprise","syllable","symbol","temperature","therefore","thorough","thought","thousand","tomorrow","tongue","tragedy","trouble","truly","typical","usually","valuable","vegetable","volunteer","Wednesday","weight","weird","wonderful","written","yesterday","accurate","adventure","although","ancient","angle","announce","answer","appear","approach","article","attention","audience","average","balance","beautiful","because","believe","belong","beneath","beside","between","bicycle","boundary","breathe","bridge","brought","building","business","careful","castle","caught","ceiling","center","certain","chance","character","charge","children","choice","choose","circle","citizen","climate","clothes","college","column","common","company","compare","complete","connect","contain","continue","correct","cotton","country","couple","create","crime","culture","damage","daughter","decide","describe","desert","design","detail","develop","difference","difficult","discover","distance","divide","dollar","double","dream","during","early","easily","effect","effort","either","empty"],
+    6: ["accommodate","acknowledge","aggressive","ambiguous","approximately","benevolent","circumstances","coincidence","contemporary","controversy","correspond","dilemma","eloquent","equivalent","exaggerate","extraordinary","humiliating","hypocrite","inevitable","ingenious","legitimate","lieutenant","maintenance","millennium","mischievous","misspell","mountainous","necessary","negotiate","neighborhood","nuisance","obstacle","occurrence","offensive","omission","opportunity","optimistic","outrageous","particular","passionate","perceive","performance","persistence","perspective","phenomenon","playwright","plausible","politician","possession","precede","prejudice","predominant","presumptuous","privilege","proceeding","proficient","proportion","prosecutor","psychiatry","psychology","publicity","punctuation","qualification","questionnaire","reasonable","recession","recommend","rehabilitation","rehearsal","relevance","representative","reputation","resistance","responsibility","satirical","scarcely","scholarly","skeptical","sophomore","statistics","subordinate","substantial","sufficient","summarize","supernatural","suppression","suspicious","technically","temporary","tendency","tolerance","tournament","transparent","tremendous","uncertain","unforgettable","universal","unnecessary","unpredictable","vocabulary","volunteer","vulnerable","wilderness","withdrawal","worthwhile","abundance","accessible","accomplishment","accountable","accumulate","accurately","achievement","acquisition","additionally","adequately","administration","admirable","advancement","affectionate","affordable","allegiance","altogether","ambition","amendment","amplify","analysis","antagonist","anticipate","apologetic","applicable","appreciation","appropriate","argumentative","arrangement","articulate","assassination","assessment","assignment","assistance","assumption","atmosphere","attentive","attribute","authoritative","awareness","behavioral","beneficial","biological","capability","captivating","categorical","causation","celebratory","characteristic","charitable","chronicle","circumstantial","civilization","collaborate","commentary","commission","commitment","communicate","comparative","compassionate","competition","complement","comprehension","concentration","confrontation","congregation","consciousness","contamination","contradiction","controversial","coordination","corroboration","cultivation","declaration","demonstration","determination","differentiation","discrimination","documentation","elaboration","elimination","empowerment","encouragement","enlightenment","environmental","exoneration","explanation","exploitation","facilitation","falsification","globalization","humanization","identification","imagination","implementation"],
+    7: ["aberration","accumulated","allegiance","ambivalent","articulate","catastrophic","concealment","condescend","consequence","contemplate","deteriorate","disproportionate","eloquence","exacerbate","fascination","formidable","fundamentally","humanitarian","immaculate","insufficient","juxtaposition","labyrinthine","magnanimous","manipulation","metaphorical","meticulous","misconception","misinterpret","narrative","negligence","nevertheless","nonconformist","objectively","obscure","paradoxical","paraphrase","parliament","peculiar","perception","perseverance","philosophical","plagiarism","predominantly","prejudicial","prerequisite","principled","prioritize","proclamation","profoundly","proliferate","protagonist","provisional","psychological","quintessential","rationalize","realization","reconciliation","referendum","rehabilitation","relinquish","remarkable","repertoire","resilience","revolutionary","rhetorical","rigorous","satirical","scrutinize","sensationalism","simultaneously","skepticism","sociological","sophisticated","spontaneous","stereotype","subordinate","substantiate","superficial","surveillance","sustainability","sympathetic","systematic","temperamental","theoretical","transformation","transparency","treacherous","turbulent","unconscionable","underestimate","unprecedented","unsubstantiated","utilitarian","vaccination","verification","victimization","visualization","vulnerability","willingness","withdrawal","accountability","accomplishment","acknowledgment","acquaintance","administration","advantageous","affiliation","aggravation","alienation","alleviation","ambivalence","antagonistic","anthropological","apprehension","archaeological","argumentative","assimilation","authoritarian","autonomous","belligerent","bureaucratic","capitulation","catastrophe","categorization","characterization","circumstantial","clarification","coercion","collaboration","commemoration","commercialization","compensation","complication","concentration","condemnation","confrontational","congregation","consciousness","constitutional","contamination","contradiction","controversial","coordination","corroboration","counterproductive","criminalization","decentralization","dehumanization","deliberation","demonstration","demonization","demoralization","denunciation","deportation","deterioration","determination","differentiation","discrimination","disillusionment","dissatisfaction","documentation","dramatization","elaboration","elimination","emancipation","empowerment","encouragement","enlightenment","entrepreneurial","exaggeration","examination","exoneration","explanation","exploitation","expropriation","facilitation","falsification","familiarization","fragmentation","generalization","globalization","humanization","identification","imagination","implementation","individualization","industrialization","institutionalization","interpretation","investigation","justification","legalization","liberalization","marginalization","militarization","misrepresentation","modernization","monopolization","naturalization","normalization"],
+    8: ["acquiescence","ambiguity","benevolence","circumspect","clandestine","conspicuous","corroborate","deliberate","deterioration","discrepancy","disseminate","eloquently","exasperation","facilitate","flamboyant","fundamentalism","idiosyncratic","impeccable","incongruous","indispensable","inefficacious","inexplicable","infallible","innuendo","insubordination","intransigent","irreconcilable","juxtaposition","loquacious","magnanimous","malfeasance","malignant","manipulation","mendacious","meritocracy","metamorphosis","microcosm","miscreant","nefarious","obsequious","ostracize","paradigm","paradoxical","perfidious","perspicacious","pertinacious","philanthropy","pluralistic","pragmatic","precipitate","predisposition","prerogative","presupposition","procrastinate","proliferation","propaganda","protagonist","psychosomatic","pugnacious","rancorous","recalcitrant","reciprocate","reconciliation","rectitude","relinquish","remonstrate","repudiate","resilience","reticent","rhetorical","sanctimonious","scrupulous","seditious","sycophantic","systematic","taciturn","tenacious","trepidation","ubiquitous","unequivocal","unprecedented","vacillate","veneration","vicarious","vindictive","vitriolic","xenophobic","zealotry","aberrant","abhorrence","abominable","absolution","abstention","abstruse","acrimonious","admonishment","adulteration","affectation","aggrandizement","alienation","allegation","alleviate","anachronism","anecdotal","antagonism","antithetical","apprehension","arbitration","arcane","aristocratic","aspiration","assiduous","atrocious","audacious","authoritarian","autocratic","avarice","belligerence","bureaucracy","callousness","capricious","capitulation","censorship","charismatic","chicanery","circumvent","coercive","cogent","collusion","complacency","complicity","condescension","confiscation","conformity","conglomerate","conscientious","consternation","contentious","convolution","culpability","cynicism","decadence","deception","defamation","deference","dehumanize","delusion","demagoguery","denigration","depravity","despotism","determinism","devious","dialectical","dichotomy","diffidence","disingenuous","dissolution","dogmatic","duplicitous","egregious","embezzlement","empiricism","entitlement","equivocate","eradicate","euphemism","exonerate","exploitation","extortion","fabrication","fanaticism","filibuster","fraudulent","frivolous","grandiose","hegemony","hypocrisy","ideological","imperialism","impunity","incendiary","indoctrination","inequitable","infiltration","insidious","intimidation","intolerance","irrational","isolationism","jingoism","jurisdiction","kleptocracy","lamentation","legitimacy","libertarian","machination","marginalization","mercenary","militarism"]
+  };
+
+  function populateGrade(grade) {
+    if(selectedGrade===grade){
+      if(!window.confirm("Reload new Grade "+grade+" words?")) return;
+    }
+    setSelectedGrade(grade);
+    const pool = [...gradeWords[grade]];
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    setWords(pool.slice(0,20).concat(Array(Math.max(0,20-pool.length)).fill('')));
+    setTimeout(()=>jbSave({grade:grade}),100);
+  }
 
   function useHint() {
     const word = shuffled[idx];
@@ -583,16 +608,41 @@ function Game() {
       {/* ══ SETUP ══ */}
       {phase==="setup" && (
         <div className="card" style={{maxHeight:"calc(100vh - 50px)",overflowY:"auto",marginBottom:"24px"}}>
-          {/* Clear all words */}
-          <div style={{textAlign:"center",marginBottom:"10px"}}>
-            <button className="btn btn-secondary" style={{fontSize:"0.85rem",padding:"7px 20px"}}
-              onClick={()=>{ setWords(Array(20).fill("")); setResults([]); setTotalHints(0); setHints(0); setHintedPos([]); }}>
-              ✕ Clear All Words
-            </button>
+          <div style={{marginBottom:'12px'}}>
+            <div style={{fontSize:'0.7rem',letterSpacing:'3px',color:'rgba(255,255,255,0.55)',textTransform:'uppercase',textAlign:'center',marginBottom:'8px',fontWeight:700}}>Auto-Fill by Grade</div>
+            <div style={{display:'flex',gap:'8px',justifyContent:'center',flexWrap:'wrap'}}>
+              {[5,6,7,8].map(g=>(
+                <button key={g} onClick={()=>populateGrade(g)}
+                  onMouseOver={e=>{if(selectedGrade!==g){e.currentTarget.style.background='linear-gradient(135deg,rgba(0,200,83,0.3),rgba(0,230,118,0.3))';e.currentTarget.style.boxShadow='0 0 10px rgba(0,230,118,0.35)';}}}
+                  onMouseOut={e=>{if(selectedGrade!==g){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.2),rgba(191,95,255,0.2))';e.currentTarget.style.boxShadow='none';}}}
+                  style={{
+                    background: selectedGrade===g ? 'linear-gradient(135deg,rgba(0,200,83,0.3),rgba(0,230,118,0.3))' : 'linear-gradient(135deg,rgba(255,45,120,0.2),rgba(191,95,255,0.2))',
+                    border: selectedGrade===g ? '1px solid rgba(0,230,118,0.6)' : '1px solid rgba(255,45,120,0.4)',
+                    borderRadius:'20px',padding:'6px 16px',color:'#fff',
+                    fontWeight:700,fontSize:'0.8rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s',
+                    boxShadow: selectedGrade===g ? '0 0 10px rgba(0,230,118,0.35)' : 'none'
+                  }}>
+                  {selectedGrade===g ? '✓ ' : ''}Grade {g}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <button className="btn btn-start" onClick={startGame}><span>✨</span><span>LET'S SPELL!</span><span>✨</span></button>
-
+          {resumeData && (
+            <div style={{background:'rgba(255,215,0,0.12)',border:'1px solid rgba(255,215,0,0.4)',borderRadius:'12px',padding:'14px 16px',marginBottom:'12px',textAlign:'center'}}>
+              <div style={{fontWeight:900,fontSize:'0.9rem',letterSpacing:'2px',color:'#FFD700',marginBottom:'8px'}}>▶ UNFINISHED GAME FOUND</div>
+              <div style={{fontSize:'0.75rem',color:'rgba(255,255,255,0.6)',marginBottom:'12px'}}>You were on word {resumeData.wordIdx+1} of 20. Continue where you left off?</div>
+              <div style={{display:'flex',gap:'8px',justifyContent:'center'}}>
+                <button onClick={()=>{ setShuffled(resumeData.shuffled); setIdx(resumeData.wordIdx); setTries(resumeData.tries); setResults(resumeData.results); setPhase('game'); setResumeData(null); }}
+                  style={{background:'linear-gradient(135deg,rgba(0,200,83,0.3),rgba(0,230,118,0.3))',border:'1px solid rgba(0,230,118,0.6)',borderRadius:'20px',padding:'7px 20px',color:'#fff',fontWeight:700,fontSize:'0.8rem',cursor:'pointer'}}>
+                  ✅ Continue
+                </button>
+                <button onClick={()=>{ setResults([]); setResumeData(null); jbSave({results:[],phase:'setup',shuffled:[],wordIdx:0}); }}
+                  style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:'20px',padding:'7px 20px',color:'rgba(255,255,255,0.6)',fontWeight:700,fontSize:'0.8rem',cursor:'pointer'}}>
+                  ✕ Start Fresh
+                </button>
+              </div>
+            </div>
+          )}
           <div className="words-grid">
             {Array(20).fill(0).map((_,i)=>{
               const w = words[i].trim().toLowerCase();
@@ -628,7 +678,9 @@ function Game() {
             </button>
           </div>
 
-                    {/* How to Play + About — small, under begin button */}
+          <button className="btn btn-start" onClick={startGame}><span>✨</span><span>LET'S SPELL!</span><span>✨</span></button>
+
+          {/* How to Play + About — small, under begin button */}
           <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
             <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('howto')}>❓ How to Play</button>
             <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('about')}>ℹ️ About</button>
@@ -646,7 +698,7 @@ function Game() {
                   const wrongWords = results.filter(r=>!r.ok).map(r=>r.word);
                   if(!wrongWords.length) return;
                   const s=[...wrongWords].sort(()=>Math.random()-.5);
-                  setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0); setHintedPos([]);
+                  setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null); setHintedPos([]);
                   setAnswer(""); setFeedback(null); setPhase("game");
                 }}>
                   🔁 REDO WRONG WORDS
