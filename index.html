@@ -475,27 +475,37 @@ function Game() {
 
   function populateGrade(grade) {
     const gradeKey = "grade"+grade;
+    const existingSlot = allSlotsRef.current[gradeKey];
+
     if(selectedGrade===grade){
-      // Same grade clicked - ask to reload fresh words
+      // Same grade clicked again - ask to reload
       if(!window.confirm("Reload new Grade "+grade+" words?")) return;
       delete allSlotsRef.current[gradeKey];
     } else {
-      // Different grade - save current slot first
-      switchSlot(grade);
-      // If saved slot exists, load it and return - don't overwrite with new words
-      if(allSlotsRef.current[gradeKey]){
+      // Save current slot before switching
+      const currentKey = selectedGrade ? "grade"+selectedGrade : "custom";
+      allSlotsRef.current[currentKey] = {
+        words: words.map(w=>w.trim()),
+        grade: selectedGrade, phase, shuffled,
+        wordIdx: idx, results, tries
+      };
+      // If this grade has a REAL previously saved slot (with grade words), load it
+      if(existingSlot && existingSlot.grade===grade){
         setSelectedGrade(grade);
+        applySlot(existingSlot);
         return;
       }
     }
-    // No saved slot - generate fresh words
+
+    // Generate fresh words for this grade
     setSelectedGrade(grade);
+    setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null); setHints(0); setHintedPos([]);
     const pool = [...gradeWords[grade]];
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     const newWords = pool.slice(0,20).concat(Array(Math.max(0,20-pool.length)).fill(''));
     setWords(newWords);
-    setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null);
-    setTimeout(()=>jbSave({grade:grade, words:newWords.map(w=>w.trim()), results:[], phase:"setup", shuffled:[], wordIdx:0, tries:0}),200);
+    allSlotsRef.current[gradeKey] = {grade, words:newWords.map(w=>w.trim()), phase:"setup", shuffled:[], wordIdx:0, results:[], tries:0};
+    setTimeout(()=>jbSave({}),200);
   }
 
 
@@ -655,7 +665,19 @@ function Game() {
             <div style={{fontSize:'0.7rem',letterSpacing:'3px',color:'rgba(255,255,255,0.55)',textTransform:'uppercase',textAlign:'center',marginBottom:'8px',fontWeight:700}}>Auto-Fill by Grade</div>
             <div style={{display:'flex',gap:'8px',justifyContent:'center',flexWrap:'wrap'}}>
                 <button
-                  onClick={()=>{ switchSlot(null); setSelectedGrade(null); }}
+                  onClick={()=>{
+                    // Save current slot
+                    const currentKey = selectedGrade ? "grade"+selectedGrade : "custom";
+                    allSlotsRef.current[currentKey] = {words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries};
+                    // Load custom slot if it exists
+                    const customSlot = allSlotsRef.current["custom"];
+                    setSelectedGrade(null);
+                    if(customSlot && customSlot.words && customSlot.words.filter(w=>w).length>0){
+                      applySlot(customSlot);
+                    } else {
+                      setWords(Array(20).fill('')); setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null);
+                    }
+                  }}
                   onMouseOver={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,165,0,0.35),rgba(255,215,0,0.35))';e.currentTarget.style.boxShadow='0 0 10px rgba(255,215,0,0.4)';}}
                   onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,165,0,0.15),rgba(255,215,0,0.15))';e.currentTarget.style.boxShadow='none';}}
                   style={{
