@@ -474,13 +474,21 @@ function Game() {
   },[]);
 
   function populateGrade(grade) {
+    const gradeKey = "grade"+grade;
     if(selectedGrade===grade){
+      // Same grade clicked - ask to reload fresh words
       if(!window.confirm("Reload new Grade "+grade+" words?")) return;
-      // Clear this grade's slot
-      delete allSlotsRef.current["grade"+grade];
+      delete allSlotsRef.current[gradeKey];
     } else {
+      // Different grade - save current slot first
       switchSlot(grade);
+      // If saved slot exists, load it and return - don't overwrite with new words
+      if(allSlotsRef.current[gradeKey]){
+        setSelectedGrade(grade);
+        return;
+      }
     }
+    // No saved slot - generate fresh words
     setSelectedGrade(grade);
     const pool = [...gradeWords[grade]];
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
