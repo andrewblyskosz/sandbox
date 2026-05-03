@@ -593,7 +593,42 @@ function Game() {
 
           <button className="btn btn-start" onClick={startGame}><span>✨</span><span>LET'S SPELL!</span><span>✨</span></button>
 
-          {/* How to Play + About — small, under begin button */}
+          <div className="words-grid">
+            {Array(20).fill(0).map((_,i)=>{
+              const w = words[i].trim().toLowerCase();
+              const result = results.find(r => r.word.toLowerCase() === w);
+              const highlight = result
+                ? result.ok
+                  ? {borderColor:"#00CC66",background:"rgba(0,160,70,.35)",color:"#AAFFCC",fontWeight:900}
+                  : {borderColor:"#CC2222",background:"rgba(160,20,20,.45)",color:"#FFAAAA",fontWeight:900}
+                : {};
+              return (
+                <div key={i} className="word-wrap">
+                  <span className="word-num">{i+1}</span>
+                  <input className="word-input" placeholder={"word "+(i+1)} value={words[i]}
+                    style={highlight}
+                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); }}
+                    onKeyDown={e=>{
+                      if(e.key==="Enter"){
+                        const all=document.querySelectorAll(".word-input");
+                        if(all[i+1]) all[i+1].focus(); else startGame();
+                      }
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Clear all words */}
+          <div style={{textAlign:"center",marginBottom:"10px"}}>
+            <button className="btn btn-secondary" style={{fontSize:"0.85rem",padding:"7px 20px"}}
+              onClick={()=>{ setWords(Array(20).fill("")); setResults([]); setTotalHints(0); setHints(0); setSelectedGrade(null); setHintedPos([]); }}>
+              ✕ Clear All Words
+            </button>
+          </div>
+
+                    {/* How to Play + About — small, under begin button */}
           <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
             <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('howto')}>❓ How to Play</button>
             <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('about')}>ℹ️ About</button>
