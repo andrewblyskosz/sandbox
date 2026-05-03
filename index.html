@@ -614,7 +614,7 @@ function Game() {
             <div style={{fontSize:'0.7rem',letterSpacing:'3px',color:'rgba(255,255,255,0.55)',textTransform:'uppercase',textAlign:'center',marginBottom:'8px',fontWeight:700}}>Auto-Fill by Grade</div>
             <div style={{display:'flex',gap:'8px',justifyContent:'center',flexWrap:'wrap'}}>
                 <button
-                  onClick={()=>{ setSelectedGrade(null); setWords(Array(20).fill('')); }}
+                  onClick={()=>{ setSelectedGrade(null); setWords(Array(20).fill('')); jbSave({grade:null,words:Array(20).fill(''),phase:'setup',shuffled:[],wordIdx:0,results:[]}); }}
                   onMouseOver={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,165,0,0.35),rgba(255,215,0,0.35))';e.currentTarget.style.boxShadow='0 0 10px rgba(255,215,0,0.4)';}}
                   onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,165,0,0.15),rgba(255,215,0,0.15))';e.currentTarget.style.boxShadow='none';}}
                   style={{
@@ -657,6 +657,20 @@ function Game() {
               </div>
             </div>
           )}
+          {/* Manual Save */}
+          <div style={{textAlign:'center',marginBottom:'8px'}}>
+            <button onClick={()=>jbSave({})}
+              style={{
+                background:'linear-gradient(135deg,rgba(0,200,255,0.2),rgba(0,100,200,0.2))',
+                border:'1px solid rgba(0,200,255,0.5)',
+                borderRadius:'20px',padding:'5px 20px',
+                color:'#00C8FF',fontWeight:700,fontSize:'0.75rem',
+                letterSpacing:'2px',cursor:'pointer',transition:'all .2s'
+              }}
+              onMouseOver={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(0,200,255,0.35),rgba(0,100,200,0.35))';}}
+              onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(0,200,255,0.2),rgba(0,100,200,0.2))';}}
+            >💾 SAVE</button>
+          </div>
           <div className="words-grid">
             {Array(20).fill(0).map((_,i)=>{
               const w = words[i].trim().toLowerCase();
