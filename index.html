@@ -366,21 +366,29 @@ function Game() {
   const allSlotsRef = useRef({});
 
   const jbSave = (overrides={}) => {
-    if(!loadedRef.current){ console.log("Save blocked - still loading"); return; }
+    if(!loadedRef.current){ return; }
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
       if(isSaving.current) return;
       isSaving.current = true;
-      const payload = Object.assign({
+
+      // Build current slot
+      const slotKey = selectedGrade ? "grade"+selectedGrade : "custom";
+      const currentSlot = Object.assign({
         words: words.map(w=>w.trim()),
         grade: selectedGrade,
-        phase,
-        shuffled,
+        phase, shuffled,
         wordIdx: idx,
-        results,
-        tries
+        results, tries
       }, overrides);
-      console.log("Saving results:",payload.results,"grade:",payload.grade);
+
+      // Store in allSlotsRef and mark active
+      allSlotsRef.current[slotKey] = currentSlot;
+      allSlotsRef.current.activeSlot = slotKey;
+
+      const payload = Object.assign({}, allSlotsRef.current);
+      console.log("Saving slot:", slotKey, "total slots:", Object.keys(payload));
+
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
