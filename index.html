@@ -599,7 +599,7 @@ function Game() {
   },[]);
 
   return (
-    <div id="app-inner" style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",minHeight:"100vh",padding:"0 20px 18px"}}>
+    <div id="app-inner" style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",minHeight:"100vh",padding:"12px 20px 18px"}}>
 
       {flash && <div className={"flash flash-"+flash} key={flash+Date.now()}/>}
       {toast && <div className={"toast toast-"+toast.type}>{toast.msg}</div>}
