@@ -457,6 +457,8 @@ function Game() {
     setTimeout(()=>jbSave({grade:grade}),100);
   }
 
+
+  const refocus = () => setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50);
   function useHint() {
     const word = shuffled[idx];
     if(!word||hints>=2) return;
@@ -783,13 +785,14 @@ function Game() {
             <input ref={inputRef} className="answer-input-hidden"
               value={answer} onChange={e=>setAnswer(e.target.value)}
               onKeyDown={e=>{ if(e.key==="Enter") submit(); }}
-              disabled={!!feedback} autoFocus/>
+              disabled={!!feedback} autoFocus
+              autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"/>
           </div>
 
           <div className="btn-row">
-            <button className="btn btn-submit" onClick={submit} disabled={!!feedback}><span>⚡</span><span>SUBMIT</span></button>
-            <button className="btn btn-secondary" style={{color:"#AAAAFF",borderColor:"rgba(150,150,255,.3)"}} onClick={skipWord} disabled={!!feedback}>⏭ Skip</button>
-            <button className="btn btn-secondary" onClick={useHint} disabled={!!feedback||hints>=2} style={{color:hints>=2?"rgba(255,255,255,0.3)":"#FFD700",borderColor:hints>=2?"rgba(255,255,255,0.1)":"rgba(255,215,0,0.4)",cursor:hints>=2?"not-allowed":"pointer"}}>💡 Hint{hints>0?` (${hints}/2)`:""}</button>
+            <button className="btn btn-submit" onClick={()=>{ submit(); refocus(); }} disabled={!!feedback}><span>⚡</span><span>SUBMIT</span></button>
+            <button className="btn btn-secondary" style={{color:"#AAAAFF",borderColor:"rgba(150,150,255,.3)"}} onClick={()=>{ skipWord(); refocus(); }} disabled={!!feedback}>⏭ Skip</button>
+            <button className="btn btn-secondary" onClick={()=>{ useHint(); refocus(); }} disabled={!!feedback||hints>=2} style={{color:hints>=2?"rgba(255,255,255,0.3)":"#FFD700",borderColor:hints>=2?"rgba(255,255,255,0.1)":"rgba(255,215,0,0.4)",cursor:hints>=2?"not-allowed":"pointer"}}>💡 Hint{hints>0?` (${hints}/2)`:""}</button>
             <button className="btn btn-secondary" style={{color:"#FF5555",borderColor:"rgba(255,85,85,.3)"}} onClick={()=>{ window.speechSynthesis.cancel(); setPhase("setup"); setFeedback(null); setAnswer(""); }}>✖ Quit</button>
           </div>
         </div>
