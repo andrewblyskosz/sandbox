@@ -363,6 +363,8 @@ function Game() {
   const [countdown,     setCountdown]    = useState(null);
   const countdownRef = useRef(null);
   const [resumeData,    setResumeData]   = useState(null);
+  const [hintedPos,     setHintedPos]    = useState([]);
+  const [modal,         setModal]        = useState(null);
 
   const JSONBIN_ID = "69f4b99e36566621a81344ee";
   const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
