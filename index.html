@@ -340,7 +340,7 @@ const { useState, useRef, useCallback, useEffect } = React;
 
 function Game() {
   const [phase,     setPhase]     = useState("setup");
-  const [words, setWords] = useState(Array(20).fill(""));
+  const [words,     setWords]     = useState(Array(20).fill(""));
   const [shuffled,  setShuffled]  = useState([]);
   const [idx,       setIdx]       = useState(0);
   const [answer,    setAnswer]    = useState("");
@@ -402,7 +402,8 @@ function Game() {
         setWords(filled);
       }
       console.log("Step 4 - setting grade:",rec.grade);
-      if(rec.grade !== null && rec.grade !== undefined) console.log("Step 5 - done");
+      if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
+      console.log("Step 5 - done");
       console.log("Restoring results:",rec.results);
       if(rec.results && rec.results.length>0) setResults(rec.results);
       if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
@@ -582,6 +583,146 @@ function Game() {
       {/* ══ SETUP ══ */}
       {phase==="setup" && (
         <div className="card" style={{maxHeight:"calc(100vh - 50px)",overflowY:"auto",marginBottom:"24px"}}>
+          {/* Clear all words */}
+          <div style={{textAlign:"center",marginBottom:"10px"}}>
+            <button className="btn btn-secondary" style={{fontSize:"0.85rem",padding:"7px 20px"}}
+              onClick={()=>{ setWords(Array(20).fill("")); setResults([]); setTotalHints(0); setHints(0); setHintedPos([]); }}>
+              ✕ Clear All Words
+            </button>
+          </div>
+
+          <button className="btn btn-start" onClick={startGame}><span>✨</span><span>LET'S SPELL!</span><span>✨</span></button>
+
+          {/* How to Play + About — small, under begin button */}
+          <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
+            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('howto')}>❓ How to Play</button>
+            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('about')}>ℹ️ About</button>
+          </div>
+
+          {results.length > 0 && (
+            <>
+              <div style={{display:"flex",gap:"10px",marginTop:"12px",position:"relative",zIndex:1}}>
+                <button className="btn" style={{
+                  flex:1,fontSize:"1.1rem",padding:"12px 0",
+                  background:"linear-gradient(135deg,rgba(200,40,40,.25),rgba(180,20,20,.35))",
+                  border:"1.5px solid rgba(200,60,60,.55)",color:"#FF7777",
+                  boxShadow:"0 0 12px rgba(200,40,40,.15)"
+                }} onClick={()=>{
+                  const wrongWords = results.filter(r=>!r.ok).map(r=>r.word);
+                  if(!wrongWords.length) return;
+                  const s=[...wrongWords].sort(()=>Math.random()-.5);
+                  setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0); setHintedPos([]);
+                  setAnswer(""); setFeedback(null); setPhase("game");
+                }}>
+                  🔁 REDO WRONG WORDS
+                </button>
+                <button className="btn" style={{
+                  fontSize:"1.1rem",padding:"12px 18px",
+                  background:"rgba(255,255,255,.04)",
+                  border:"1.5px solid rgba(255,255,255,.15)",color:"rgba(255,255,255,.4)",
+                }} onClick={()=>setResults([])}>
+                  ✕ Clear Results
+                </button>
+              </div>
+              <div style={{display:"flex",gap:"18px",justifyContent:"center",marginTop:"12px",position:"relative",zIndex:1,alignItems:"center"}}>
+                <span style={{display:"flex",alignItems:"center",gap:"6px",fontSize:".72rem",fontWeight:800,color:"rgba(0,255,136,.7)",letterSpacing:"1.5px"}}>
+                  <span style={{width:"11px",height:"11px",borderRadius:"50%",background:"rgba(0,255,136,.7)",display:"inline-block",flexShrink:0}}></span>CORRECT {countdown!==null && <span style={{fontSize:'1.4rem',fontWeight:900,color:'#FFD700',marginLeft:'8px'}}>{countdown}</span>}
+                </span>
+                <span style={{display:"flex",alignItems:"center",gap:"6px",fontSize:".72rem",fontWeight:800,color:"rgba(200,80,80,.9)",letterSpacing:"1.5px"}}>
+                  <span style={{width:"11px",height:"11px",borderRadius:"50%",background:"rgba(200,60,60,.8)",display:"inline-block",flexShrink:0}}></span>INCORRECT
+                </span>
+                <span style={{display:"flex",alignItems:"center",gap:"6px",fontSize:".72rem",fontWeight:800,color:"rgba(255,255,255,.3)",letterSpacing:"1.5px"}}>
+                  <span style={{width:"11px",height:"11px",borderRadius:"50%",background:"rgba(8,8,30,.9)",border:"1.5px solid rgba(255,45,120,.5)",display:"inline-block",flexShrink:0}}></span>NOT ASKED
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ══ GAME ══ */}
+      {phase==="game" && (
+        <div className="card" style={{marginBottom:"80px"}}>
+          {feedback==="correct" && (
+            <div className="overlay ov-correct">
+              <div className="ov-big">✦ PERFECT! ✦</div>
+              <div className="ov-sub">🌟 Incredible power! Keep it up! 🌟</div>
+            </div>
+          )}
+          {feedback==="try" && (
+            <div className="overlay ov-try">
+              <div className="ov-big">⚠ TRY AGAIN!</div>
+              <div className="ov-sub">One more chance — listen closely!</div>
+            </div>
+          )}
+          {feedback==="wrong" && (
+            <div className="overlay ov-wrong">
+              <div className="ov-big">✗ Incorrect</div>
+              <div className="ov-sub">The correct spelling was:</div>
+              <div className="ov-reveal">{shuffled[idx]}</div>
+              {countdown!==null && <div style={{fontSize:"2.5rem",fontWeight:900,color:"rgba(255,100,100,0.9)",marginTop:"8px"}}>{countdown}</div>}
+              <div className="ov-sub" style={{marginTop:6,color:"rgba(200,80,80,.55)"}}>Keep practicing — you'll get it next time!</div>
+            </div>
+          )}
+
+          <div className="stats-row">
+            <div className="word-counter">WORD {idx+1} / {shuffled.length}</div>
+            <div className="progress-bg">
+              <div className="progress-fill" style={{width:((idx/shuffled.length)*100)+"%"}}/>
+            </div>
+            <div className="tries-row">
+              <div className={"try-dot "+(tries===0?"on":"off")}/>
+              <div className={"try-dot "+(tries===0?"on":"off")}/>
+              <span className="try-label">{tries===0?"2 tries left":"last chance!"}</span>
+            </div>
+          </div>
+
+          <div className="speak-section">
+            <div className="speak-hint">👂 Listen carefully, then spell the word!</div>
+            <button className={"btn btn-speak "+(speaking?"pulsing":"")} onClick={()=>{ speak(shuffled[idx]); setTimeout(()=>{ if(inputRef.current) inputRef.current.focus(); },100); }}>
+              {speaking?"🔊  LISTENING...":"🔊  HEAR THE WORD"}
+            </button>
+          </div>
+
+          <div className="answer-box" onClick={()=>inputRef.current&&inputRef.current.focus()}>
+            <div className="letter-display">
+              {shuffled[idx] && Array.from(shuffled[idx]).map((letter,i)=>{
+                const isHinted = hintedPos.includes(i);
+                const typedChar = answer[i];
+                if(isHinted) return <div key={i} className="letter-cell letter-cell-hint">{letter}</div>;
+                if(typedChar) return <div key={i} className="letter-cell letter-cell-typed">{typedChar}</div>;
+                return <div key={i} className="letter-cell letter-cell-empty">?</div>;
+              })}
+            </div>
+            <input ref={inputRef} className="answer-input-hidden"
+              value={answer} onChange={e=>setAnswer(e.target.value)}
+              onKeyDown={e=>{ if(e.key==="Enter") submit(); }}
+              disabled={!!feedback} autoFocus/>
+          </div>
+
+          <div className="btn-row">
+            <button className="btn btn-submit" onClick={submit} disabled={!!feedback}><span>⚡</span><span>SUBMIT</span></button>
+            <button className="btn btn-secondary" style={{color:"#AAAAFF",borderColor:"rgba(150,150,255,.3)"}} onClick={skipWord} disabled={!!feedback}>⏭ Skip</button>
+            <button className="btn btn-secondary" onClick={useHint} disabled={!!feedback||hints>=2} style={{color:hints>=2?"rgba(255,255,255,0.3)":"#FFD700",borderColor:hints>=2?"rgba(255,255,255,0.1)":"rgba(255,215,0,0.4)",cursor:hints>=2?"not-allowed":"pointer"}}>💡 Hint{hints>0?` (${hints}/2)`:""}</button>
+            <button className="btn btn-secondary" style={{color:"#FF5555",borderColor:"rgba(255,85,85,.3)"}} onClick={()=>{ window.speechSynthesis.cancel(); setPhase("setup"); setFeedback(null); setAnswer(""); }}>✖ Quit</button>
+          </div>
+        </div>
+      )}
+
+      {/* ══ RESULTS ══ */}
+      {phase==="results" && (
+        <div className="card">
+          <div className="results-top">
+            <div className="score-ring" style={{background:"conic-gradient(#00FF88 0deg,#00FF88 "+(pct*3.6)+"deg,rgba(255,255,255,.09) "+(pct*3.6)+"deg)"}}>
+              <div className="score-num">{score}/{total}</div>
+            </div>
+            <div className="verdict-block">
+              <div className="stars-row">{score===total?"🌟🌟🌟":score>=total*.8?"⭐⭐⭐":score>=total*.6?"⭐⭐":"⭐"}</div>
+              <div className="verdict" style={{color:score===total?"#FFD700":score>=total*.8?"#00FF88":score>=total*.6?"#FF8C00":"#FF5555"}}>
+                {score===total?"LEGENDARY! 🏆":score>=total*.8?"GREAT POWER! 💪":score>=total*.6?"KEEP TRAINING! 🔥":"MORE PRACTICE! ⚡"}
+              </div>
+            </div>
+          </div>
           <div className="result-grid">
             {results.map((r,i)=>(
               <div key={i} className={"ri "+(r.ok?"ri-y":"ri-n")}>
