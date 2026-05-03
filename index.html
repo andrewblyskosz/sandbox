@@ -398,28 +398,39 @@ function Game() {
     })
     .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
     .then(data=>{
-      console.log("Raw load:",JSON.stringify(data).slice(0,200));
-      console.log("Step 1 - parsing rec");
       const rec = data.record || data;
-      console.log("Step 2 - rec:",!!rec,"words:",rec&&rec.words&&rec.words.length,"isArray:",rec&&Array.isArray(rec.words),"grade:",rec&&rec.grade);
-      if(!rec) return;
-      if(rec.words && Array.isArray(rec.words)){
-        const filled = [...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")].slice(0,20);
-        console.log("Step 3 - Setting words:",filled.filter(w=>w).length,"words");
-        setWords(filled);
-      }
-      console.log("Step 4 - setting grade:",rec.grade);
-      if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
-      console.log("Step 5 - done");
-      console.log("Restoring results:",rec.results);
-      if(rec.results && rec.results.length>0) setResults(rec.results);
-      if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
-        setResumeData({shuffled:rec.shuffled, wordIdx:rec.wordIdx||0, tries:rec.tries||0, results:rec.results||[]});
+      console.log("Loaded slots:", Object.keys(rec));
+      allSlotsRef.current = rec;
+
+      // Determine which slot to load - use activeSlot or default to custom
+      const activeKey = rec.activeSlot || "custom";
+      const slot = rec[activeKey];
+
+      if(slot){
+        // Restore grade selection
+        if(slot.grade !== undefined && slot.grade !== null) setSelectedGrade(slot.grade);
+
+        // Restore words
+        if(slot.words && Array.isArray(slot.words)){
+          const filled = [...slot.words,...Array(Math.max(0,20-slot.words.length)).fill("")].slice(0,20);
+          setWords(filled);
+        }
+
+        // Restore results
+        if(slot.results && slot.results.length>0) setResults(slot.results);
+
+        // Restore game progress
+        if(slot.phase==="game" && slot.shuffled && slot.shuffled.length>0){
+          setShuffled(slot.shuffled);
+          setIdx(slot.wordIdx||0);
+          setTries(slot.tries||0);
+          setResumeData({shuffled:slot.shuffled,wordIdx:slot.wordIdx||0,tries:slot.tries||0,results:slot.results||[]});
+        }
       }
     })
     .catch(e=>console.error("Load failed:",e))
     .finally(()=>{ loadedRef.current=true; console.log("Load complete - saves now enabled"); });
-  };
+  }
 
   // Load once on mount
   useEffect(()=>{ jbLoad(); },[]);
