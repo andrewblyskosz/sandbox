@@ -357,34 +357,21 @@ function Game() {
   const [speaking,  setSpeaking]  = useState(false);
   const [toast,     setToast]     = useState(null);
   const inputRef = useRef(null);
-  const [hints,         setHints]        = useState(0);
-  const [totalHints,    setTotalHints]   = useState(0);
-  const [selectedGrade, setSelectedGrade]= useState(null);
-  const [countdown,     setCountdown]    = useState(null);
-  const countdownRef = useRef(null);
-  const [resumeData,    setResumeData]   = useState(null);
-  const [hintedPos,     setHintedPos]    = useState([]);
-  const [modal,         setModal]        = useState(null);
 
   const JSONBIN_ID = "69f4b99e36566621a81344ee";
   const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
   const saveTimerRef = useRef(null);
   const isSaving = useRef(false);
   const loadedRef = useRef(false);
-  const allSlotsRef = useRef({});  // holds full multi-slot data
+  const allSlotsRef = useRef({});
 
-  // Key for current slot
-  const slotKey = () => selectedGrade ? "grade"+selectedGrade : "custom";
-
-  // Save current slot into allSlotsRef then PUT to JSONbin
   const jbSave = (overrides={}) => {
-    if(!loadedRef.current) return;
+    if(!loadedRef.current){ console.log("Save blocked - still loading"); return; }
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
       if(isSaving.current) return;
       isSaving.current = true;
-      // Build current slot snapshot
-      const currentSlot = Object.assign({
+      const payload = Object.assign({
         words: words.map(w=>w.trim()),
         grade: selectedGrade,
         phase,
@@ -393,11 +380,7 @@ function Game() {
         results,
         tries
       }, overrides);
-      // Update the slot in our master ref
-      allSlotsRef.current[slotKey()] = currentSlot;
-      allSlotsRef.current.activeSlot = slotKey();
-      const payload = allSlotsRef.current;
-      console.log("Saving slot:", slotKey(), "words:", currentSlot.words.filter(w=>w).length);
+      console.log("Saving results:",payload.results,"grade:",payload.grade);
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
@@ -409,107 +392,98 @@ function Game() {
     },800);
   };
 
-  // Load a slot and apply it to state
-  const applySlot = (slot) => {
-    if(!slot) return;
-    if(slot.words && Array.isArray(slot.words)){
-      const filled = [...slot.words,...Array(Math.max(0,20-slot.words.length)).fill("")].slice(0,20);
-      setWords(filled);
-    }
-    if(slot.grade !== undefined) setSelectedGrade(slot.grade);
-    if(slot.results && slot.results.length>0) setResults(slot.results);
-    if(slot.phase==="game" && slot.shuffled && slot.shuffled.length>0){
-      setShuffled(slot.shuffled);
-      setIdx(slot.wordIdx||0);
-      setTries(slot.tries||0);
-      setResumeData({shuffled:slot.shuffled, wordIdx:slot.wordIdx||0, tries:slot.tries||0, results:slot.results||[]});
-    }
-  };
-
-  // Switch to a different slot (grade or custom)
-  const switchSlot = (newGrade) => {
-    // Save current slot first
-    const currentSlot = {
-      words: words.map(w=>w.trim()),
-      grade: selectedGrade,
-      phase,
-      shuffled,
-      wordIdx: idx,
-      results,
-      tries
-    };
-    const key = selectedGrade ? "grade"+selectedGrade : "custom";
-    allSlotsRef.current[key] = currentSlot;
-    // Load new slot
-    const newKey = newGrade ? "grade"+newGrade : "custom";
-    const saved = allSlotsRef.current[newKey];
-    if(saved){
-      applySlot(saved);
-    } else {
-      // No saved slot for this grade yet
-      setResults([]); setShuffled([]); setIdx(0); setTries(0);
-      setPhase("setup"); setResumeData(null);
-    }
-  };
-
-  // Load all slots on mount
-  useEffect(()=>{
-    fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest?meta=false",{
+  const jbLoad = () => {
+    fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
       headers:{"X-Master-Key":JSONBIN_KEY}
     })
     .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
     .then(data=>{
+      console.log("Raw load:",JSON.stringify(data).slice(0,200));
+      console.log("Step 1 - parsing rec");
       const rec = data.record || data;
-      console.log("Loaded all slots:", Object.keys(rec));
-      allSlotsRef.current = rec;
-      // Load the active slot or default to custom
-      const activeKey = rec.activeSlot || "custom";
-      const activeSlot = rec[activeKey];
-      if(activeSlot){
-        applySlot(activeSlot);
+      console.log("Step 2 - rec:",!!rec,"words:",rec&&rec.words&&rec.words.length,"isArray:",rec&&Array.isArray(rec.words),"grade:",rec&&rec.grade);
+      if(!rec) return;
+      if(rec.words && Array.isArray(rec.words)){
+        const filled = [...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")].slice(0,20);
+        console.log("Step 3 - Setting words:",filled.filter(w=>w).length,"words");
+        setWords(filled);
+      }
+      console.log("Step 4 - setting grade:",rec.grade);
+      if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
+      console.log("Step 5 - done");
+      console.log("Restoring results:",rec.results);
+      if(rec.results && rec.results.length>0) setResults(rec.results);
+      if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
+        setResumeData({shuffled:rec.shuffled, wordIdx:rec.wordIdx||0, tries:rec.tries||0, results:rec.results||[]});
       }
     })
     .catch(e=>console.error("Load failed:",e))
-    .finally(()=>{ loadedRef.current=true; });
-  },[]);
+    .finally(()=>{ loadedRef.current=true; console.log("Load complete - saves now enabled"); });
+  };
+
+  // Load once on mount
+  useEffect(()=>{ jbLoad(); },[]);
+
+
+
+
+
+
+
+
+  const [hints,         setHints]        = useState(0);
+  const [hintedPos,     setHintedPos]    = useState([]);
+  const [totalHints,    setTotalHints]   = useState(0);
+  const [selectedGrade, setSelectedGrade]= useState(null);
+  const [resumeData,     setResumeData]    = useState(null);
+  const [countdown,     setCountdown]    = useState(null);
+  const countdownRef = useRef(null);
+  const [modal, setModal] = useState(null);
+
+  const gradeWords = {
+    5: ["absence","achieve","adequate","apparent","arithmetic","bargain","calendar","candidate","cemetery","committee","conscience","deceive","definite","desperate","embarrass","environment","existence","fascinating","government","guarantee","happened","heroes","imaginary","immediately","independent","interrupt","island","judgment","knowledge","library","lightning","literature","lonely","medicine","medieval","minimum","miscellaneous","mysterious","necessary","neighbor","occasion","opinion","opposite","original","parallel","patience","permanent","physical","pleasant","possession","prairie","precious","prejudice","presence","privilege","probably","procedure","pronunciation","protein","purchase","purpose","quantity","quarter","question","realize","receive","recognize","recommend","reference","relief","remember","repetition","restaurant","rhythm","sacrifice","schedule","science","secretary","sentence","separate","several","signature","similar","sincerely","situation","solution","sometimes","stomach","straight","strength","studying","succeed","suggestion","surprise","syllable","symbol","temperature","therefore","thorough","thought","thousand","tomorrow","tongue","tragedy","trouble","truly","typical","usually","valuable","vegetable","volunteer","Wednesday","weight","weird","wonderful","written","yesterday","accurate","adventure","although","ancient","angle","announce","answer","appear","approach","article","attention","audience","average","balance","beautiful","because","believe","belong","beneath","beside","between","bicycle","boundary","breathe","bridge","brought","building","business","careful","castle","caught","ceiling","center","certain","chance","character","charge","children","choice","choose","circle","citizen","climate","clothes","college","column","common","company","compare","complete","connect","contain","continue","correct","cotton","country","couple","create","crime","culture","damage","daughter","decide","describe","desert","design","detail","develop","difference","difficult","discover","distance","divide","dollar","double","dream","during","early","easily","effect","effort","either","empty"],
+    6: ["accommodate","acknowledge","aggressive","ambiguous","approximately","benevolent","circumstances","coincidence","contemporary","controversy","correspond","dilemma","eloquent","equivalent","exaggerate","extraordinary","humiliating","hypocrite","inevitable","ingenious","legitimate","lieutenant","maintenance","millennium","mischievous","misspell","mountainous","necessary","negotiate","neighborhood","nuisance","obstacle","occurrence","offensive","omission","opportunity","optimistic","outrageous","particular","passionate","perceive","performance","persistence","perspective","phenomenon","playwright","plausible","politician","possession","precede","prejudice","predominant","presumptuous","privilege","proceeding","proficient","proportion","prosecutor","psychiatry","psychology","publicity","punctuation","qualification","questionnaire","reasonable","recession","recommend","rehabilitation","rehearsal","relevance","representative","reputation","resistance","responsibility","satirical","scarcely","scholarly","skeptical","sophomore","statistics","subordinate","substantial","sufficient","summarize","supernatural","suppression","suspicious","technically","temporary","tendency","tolerance","tournament","transparent","tremendous","uncertain","unforgettable","universal","unnecessary","unpredictable","vocabulary","volunteer","vulnerable","wilderness","withdrawal","worthwhile","abundance","accessible","accomplishment","accountable","accumulate","accurately","achievement","acquisition","additionally","adequately","administration","admirable","advancement","affectionate","affordable","allegiance","altogether","ambition","amendment","amplify","analysis","antagonist","anticipate","apologetic","applicable","appreciation","appropriate","argumentative","arrangement","articulate","assassination","assessment","assignment","assistance","assumption","atmosphere","attentive","attribute","authoritative","awareness","behavioral","beneficial","biological","capability","captivating","categorical","causation","celebratory","characteristic","charitable","chronicle","circumstantial","civilization","collaborate","commentary","commission","commitment","communicate","comparative","compassionate","competition","complement","comprehension","concentration","confrontation","congregation","consciousness","contamination","contradiction","controversial","coordination","corroboration","cultivation","declaration","demonstration","determination","differentiation","discrimination","documentation","elaboration","elimination","empowerment","encouragement","enlightenment","environmental","exoneration","explanation","exploitation","facilitation","falsification","globalization","humanization","identification","imagination","implementation"],
+    7: ["aberration","accumulated","allegiance","ambivalent","articulate","catastrophic","concealment","condescend","consequence","contemplate","deteriorate","disproportionate","eloquence","exacerbate","fascination","formidable","fundamentally","humanitarian","immaculate","insufficient","juxtaposition","labyrinthine","magnanimous","manipulation","metaphorical","meticulous","misconception","misinterpret","narrative","negligence","nevertheless","nonconformist","objectively","obscure","paradoxical","paraphrase","parliament","peculiar","perception","perseverance","philosophical","plagiarism","predominantly","prejudicial","prerequisite","principled","prioritize","proclamation","profoundly","proliferate","protagonist","provisional","psychological","quintessential","rationalize","realization","reconciliation","referendum","rehabilitation","relinquish","remarkable","repertoire","resilience","revolutionary","rhetorical","rigorous","satirical","scrutinize","sensationalism","simultaneously","skepticism","sociological","sophisticated","spontaneous","stereotype","subordinate","substantiate","superficial","surveillance","sustainability","sympathetic","systematic","temperamental","theoretical","transformation","transparency","treacherous","turbulent","unconscionable","underestimate","unprecedented","unsubstantiated","utilitarian","vaccination","verification","victimization","visualization","vulnerability","willingness","withdrawal","accountability","accomplishment","acknowledgment","acquaintance","administration","advantageous","affiliation","aggravation","alienation","alleviation","ambivalence","antagonistic","anthropological","apprehension","archaeological","argumentative","assimilation","authoritarian","autonomous","belligerent","bureaucratic","capitulation","catastrophe","categorization","characterization","circumstantial","clarification","coercion","collaboration","commemoration","commercialization","compensation","complication","concentration","condemnation","confrontational","congregation","consciousness","constitutional","contamination","contradiction","controversial","coordination","corroboration","counterproductive","criminalization","decentralization","dehumanization","deliberation","demonstration","demonization","demoralization","denunciation","deportation","deterioration","determination","differentiation","discrimination","disillusionment","dissatisfaction","documentation","dramatization","elaboration","elimination","emancipation","empowerment","encouragement","enlightenment","entrepreneurial","exaggeration","examination","exoneration","explanation","exploitation","expropriation","facilitation","falsification","familiarization","fragmentation","generalization","globalization","humanization","identification","imagination","implementation","individualization","industrialization","institutionalization","interpretation","investigation","justification","legalization","liberalization","marginalization","militarization","misrepresentation","modernization","monopolization","naturalization","normalization"],
+    8: ["acquiescence","ambiguity","benevolence","circumspect","clandestine","conspicuous","corroborate","deliberate","deterioration","discrepancy","disseminate","eloquently","exasperation","facilitate","flamboyant","fundamentalism","idiosyncratic","impeccable","incongruous","indispensable","inefficacious","inexplicable","infallible","innuendo","insubordination","intransigent","irreconcilable","juxtaposition","loquacious","magnanimous","malfeasance","malignant","manipulation","mendacious","meritocracy","metamorphosis","microcosm","miscreant","nefarious","obsequious","ostracize","paradigm","paradoxical","perfidious","perspicacious","pertinacious","philanthropy","pluralistic","pragmatic","precipitate","predisposition","prerogative","presupposition","procrastinate","proliferation","propaganda","protagonist","psychosomatic","pugnacious","rancorous","recalcitrant","reciprocate","reconciliation","rectitude","relinquish","remonstrate","repudiate","resilience","reticent","rhetorical","sanctimonious","scrupulous","seditious","sycophantic","systematic","taciturn","tenacious","trepidation","ubiquitous","unequivocal","unprecedented","vacillate","veneration","vicarious","vindictive","vitriolic","xenophobic","zealotry","aberrant","abhorrence","abominable","absolution","abstention","abstruse","acrimonious","admonishment","adulteration","affectation","aggrandizement","alienation","allegation","alleviate","anachronism","anecdotal","antagonism","antithetical","apprehension","arbitration","arcane","aristocratic","aspiration","assiduous","atrocious","audacious","authoritarian","autocratic","avarice","belligerence","bureaucracy","callousness","capricious","capitulation","censorship","charismatic","chicanery","circumvent","coercive","cogent","collusion","complacency","complicity","condescension","confiscation","conformity","conglomerate","conscientious","consternation","contentious","convolution","culpability","cynicism","decadence","deception","defamation","deference","dehumanize","delusion","demagoguery","denigration","depravity","despotism","determinism","devious","dialectical","dichotomy","diffidence","disingenuous","dissolution","dogmatic","duplicitous","egregious","embezzlement","empiricism","entitlement","equivocate","eradicate","euphemism","exonerate","exploitation","extortion","fabrication","fanaticism","filibuster","fraudulent","frivolous","grandiose","hegemony","hypocrisy","ideological","imperialism","impunity","incendiary","indoctrination","inequitable","infiltration","insidious","intimidation","intolerance","irrational","isolationism","jingoism","jurisdiction","kleptocracy","lamentation","legitimacy","libertarian","machination","marginalization","mercenary","militarism"]
+  };
 
   function populateGrade(grade) {
     const gradeKey = "grade"+grade;
-    const existingSlot = allSlotsRef.current[gradeKey];
-
     if(selectedGrade===grade){
-      // Same grade clicked again - ask to reload
       if(!window.confirm("Reload new Grade "+grade+" words?")) return;
       delete allSlotsRef.current[gradeKey];
     } else {
-      // Save current slot before switching
-      const currentKey = selectedGrade ? "grade"+selectedGrade : "custom";
-      allSlotsRef.current[currentKey] = {
-        words: words.map(w=>w.trim()),
-        grade: selectedGrade, phase, shuffled,
-        wordIdx: idx, results, tries
-      };
-      // If this grade has a REAL previously saved slot (with grade words), load it
-      if(existingSlot && existingSlot.grade===grade){
+      // Save current slot
+      const curKey = selectedGrade ? "grade"+selectedGrade : "custom";
+      allSlotsRef.current[curKey] = {words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries};
+      // If grade slot exists with real grade words, load it
+      const existing = allSlotsRef.current[gradeKey];
+      if(existing && existing.grade===grade){
         setSelectedGrade(grade);
-        applySlot(existingSlot);
+        const filled = [...existing.words,...Array(Math.max(0,20-existing.words.length)).fill("")].slice(0,20);
+        setWords(filled);
+        if(existing.results && existing.results.length>0) setResults(existing.results);
+        else setResults([]);
+        if(existing.phase==="game" && existing.shuffled && existing.shuffled.length>0){
+          setShuffled(existing.shuffled); setIdx(existing.wordIdx||0); setTries(existing.tries||0);
+          setResumeData({shuffled:existing.shuffled,wordIdx:existing.wordIdx||0,tries:existing.tries||0,results:existing.results||[]});
+        } else {
+          setShuffled([]); setIdx(0); setTries(0); setResumeData(null); setPhase("setup");
+        }
+        setTimeout(()=>jbSave({}),200);
         return;
       }
     }
-
-    // Generate fresh words for this grade
+    // Generate fresh words
     setSelectedGrade(grade);
     setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null); setHints(0); setHintedPos([]);
     const pool = [...gradeWords[grade]];
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     const newWords = pool.slice(0,20).concat(Array(Math.max(0,20-pool.length)).fill(''));
     setWords(newWords);
-    allSlotsRef.current[gradeKey] = {grade, words:newWords.map(w=>w.trim()), phase:"setup", shuffled:[], wordIdx:0, results:[], tries:0};
-    setTimeout(()=>jbSave({}),200);
+    setTimeout(()=>jbSave({grade:grade,words:newWords.map(w=>w.trim()),phase:"setup",shuffled:[],wordIdx:0,results:[],tries:0}),200);
   }
 
-
-  const refocus = () => setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50);
   function useHint() {
     const word = shuffled[idx];
     if(!word||hints>=2) return;
@@ -612,17 +586,17 @@ function Game() {
       if(hintedPos.includes(i)) return letter;
       return answer[i]||'';
     }).join('');
-    const ok = fullAnswer.toLowerCase()===word.toLowerCase();
+    const ok = fullAnswer.toLowerCase()===word.toLowerCase() && !fullAnswer.includes('');
     if(ok) {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
       setResults(r=>[...r,{word,ok:true}]);
-      setCountdown(1);
-      let c=1; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
-      setTimeout(()=>advance(shuffled,idx), 1900);
+      setCountdown(5);
+      let c=5; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
+      setTimeout(()=>advance(shuffled,idx), 5000);
     } else if(tries===0) {
       setFeedback("try"); setTries(1);
-      setTimeout(()=>{ setFeedback(null); setAnswer(""); setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50); },1900);
+      setTimeout(()=>{ setFeedback(null); setAnswer(""); inputRef.current?.focus(); },1900);
     } else {
       doFlash("red"); triggerBgGlow("wrong");
       setFeedback("wrong");
@@ -650,7 +624,7 @@ function Game() {
   },[]);
 
   return (
-    <div id="app-inner" style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",minHeight:"100vh",padding:"12px 20px 18px"}}>
+    <div id="app-inner" style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",minHeight:"100vh",padding:"0 20px 18px"}}>
 
       {flash && <div className={"flash flash-"+flash} key={flash+Date.now()}/>}
       {toast && <div className={"toast toast-"+toast.type}>{toast.msg}</div>}
@@ -667,25 +641,23 @@ function Game() {
                 <button
                   onClick={()=>{
                     // Save current slot
-                    const currentKey = selectedGrade ? "grade"+selectedGrade : "custom";
-                    allSlotsRef.current[currentKey] = {words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries};
-                    // Load custom slot if it exists
-                    const customSlot = allSlotsRef.current["custom"];
+                    const curKey = selectedGrade ? "grade"+selectedGrade : "custom";
+                    allSlotsRef.current[curKey] = {words:words.map(w=>w.trim()),grade:selectedGrade,phase,shuffled,wordIdx:idx,results,tries};
+                    // Load custom slot if exists
+                    const cs = allSlotsRef.current["custom"];
                     setSelectedGrade(null);
-                    if(customSlot && customSlot.words && customSlot.words.filter(w=>w).length>0){
-                      applySlot(customSlot);
+                    if(cs && cs.words && cs.words.filter(w=>w).length>0){
+                      const filled = [...cs.words,...Array(Math.max(0,20-cs.words.length)).fill("")].slice(0,20);
+                      setWords(filled);
+                      if(cs.results && cs.results.length>0) setResults(cs.results);
                     } else {
-                      setWords(Array(20).fill('')); setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null);
+                      setWords(Array(20).fill("")); setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null);
                     }
+                    setTimeout(()=>jbSave({}),200);
                   }}
                   onMouseOver={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,165,0,0.35),rgba(255,215,0,0.35))';e.currentTarget.style.boxShadow='0 0 10px rgba(255,215,0,0.4)';}}
                   onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,165,0,0.15),rgba(255,215,0,0.15))';e.currentTarget.style.boxShadow='none';}}
-                  style={{
-                    background:'linear-gradient(135deg,rgba(255,165,0,0.15),rgba(255,215,0,0.15))',
-                    border:'1px solid rgba(255,215,0,0.4)',
-                    borderRadius:'20px',padding:'6px 16px',color:'#FFD700',
-                    fontWeight:700,fontSize:'0.8rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s'
-                  }}>
+                  style={{background:'linear-gradient(135deg,rgba(255,165,0,0.15),rgba(255,215,0,0.15))',border:'1px solid rgba(255,215,0,0.4)',borderRadius:'20px',padding:'6px 16px',color:'#FFD700',fontWeight:700,fontSize:'0.8rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s'}}>
                   ✏️ My Words
                 </button>
               {[5,6,7,8].map(g=>(
@@ -720,20 +692,6 @@ function Game() {
               </div>
             </div>
           )}
-          {/* Manual Save */}
-          <div style={{textAlign:'center',marginBottom:'8px'}}>
-            <button onClick={()=>jbSave({})}
-              style={{
-                background:'linear-gradient(135deg,rgba(0,200,255,0.2),rgba(0,100,200,0.2))',
-                border:'1px solid rgba(0,200,255,0.5)',
-                borderRadius:'20px',padding:'5px 20px',
-                color:'#00C8FF',fontWeight:700,fontSize:'0.75rem',
-                letterSpacing:'2px',cursor:'pointer',transition:'all .2s'
-              }}
-              onMouseOver={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(0,200,255,0.35),rgba(0,100,200,0.35))';}}
-              onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(0,200,255,0.2),rgba(0,100,200,0.2))';}}
-            >💾 SAVE</button>
-          </div>
           <div className="words-grid">
             {Array(20).fill(0).map((_,i)=>{
               const w = words[i].trim().toLowerCase();
@@ -748,7 +706,7 @@ function Game() {
                   <span className="word-num">{i+1}</span>
                   <input className="word-input" placeholder={"word "+(i+1)} value={words[i]}
                     style={highlight}
-                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); jbSave({words:u.map(w=>w.trim())}); }}
+                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); }}
                     onKeyDown={e=>{
                       if(e.key==="Enter"){
                         const all=document.querySelectorAll(".word-input");
@@ -771,7 +729,13 @@ function Game() {
 
           <button className="btn btn-start" onClick={startGame}><span>✨</span><span>LET'S SPELL!</span><span>✨</span></button>
 
-                    {results.length > 0 && (
+          {/* How to Play + About — small, under begin button */}
+          <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
+            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('howto')}>❓ How to Play</button>
+            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('about')}>ℹ️ About</button>
+          </div>
+
+          {results.length > 0 && (
             <>
               <div style={{display:"flex",gap:"10px",marginTop:"12px",position:"relative",zIndex:1}}>
                 <button className="btn" style={{
@@ -809,11 +773,6 @@ function Game() {
               </div>
             </>
           )}
-          {/* How to Play + About */}
-          <div style={{display:"flex",gap:"10px",marginTop:"10px",position:"relative",zIndex:1}}>
-            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('howto')}>❓ How to Play</button>
-            <button className="icon-btn" style={{flex:1,justifyContent:"center",padding:"6px 10px",fontSize:".75rem"}} onClick={()=>setModal('about')}>ℹ️ About</button>
-          </div>
         </div>
       )}
 
@@ -874,14 +833,13 @@ function Game() {
             <input ref={inputRef} className="answer-input-hidden"
               value={answer} onChange={e=>setAnswer(e.target.value)}
               onKeyDown={e=>{ if(e.key==="Enter") submit(); }}
-              disabled={!!feedback} autoFocus
-              autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"/>
+              disabled={!!feedback} autoFocus/>
           </div>
 
           <div className="btn-row">
-            <button className="btn btn-submit" onClick={()=>{ submit(); refocus(); }} disabled={!!feedback}><span>⚡</span><span>SUBMIT</span></button>
-            <button className="btn btn-secondary" style={{color:"#AAAAFF",borderColor:"rgba(150,150,255,.3)"}} onClick={()=>{ skipWord(); refocus(); }} disabled={!!feedback}>⏭ Skip</button>
-            <button className="btn btn-secondary" onClick={()=>{ useHint(); refocus(); }} disabled={!!feedback||hints>=2} style={{color:hints>=2?"rgba(255,255,255,0.3)":"#FFD700",borderColor:hints>=2?"rgba(255,255,255,0.1)":"rgba(255,215,0,0.4)",cursor:hints>=2?"not-allowed":"pointer"}}>💡 Hint{hints>0?` (${hints}/2)`:""}</button>
+            <button className="btn btn-submit" onClick={submit} disabled={!!feedback}><span>⚡</span><span>SUBMIT</span></button>
+            <button className="btn btn-secondary" style={{color:"#AAAAFF",borderColor:"rgba(150,150,255,.3)"}} onClick={skipWord} disabled={!!feedback}>⏭ Skip</button>
+            <button className="btn btn-secondary" onClick={useHint} disabled={!!feedback||hints>=2} style={{color:hints>=2?"rgba(255,255,255,0.3)":"#FFD700",borderColor:hints>=2?"rgba(255,255,255,0.1)":"rgba(255,215,0,0.4)",cursor:hints>=2?"not-allowed":"pointer"}}>💡 Hint{hints>0?` (${hints}/2)`:""}</button>
             <button className="btn btn-secondary" style={{color:"#FF5555",borderColor:"rgba(255,85,85,.3)"}} onClick={()=>{ window.speechSynthesis.cancel(); setPhase("setup"); setFeedback(null); setAnswer(""); }}>✖ Quit</button>
           </div>
         </div>
@@ -909,8 +867,8 @@ function Game() {
             ))}
           </div>
           {totalHints>0&&(<div style={{textAlign:"center",margin:"10px 0",fontSize:"0.85rem",color:"rgba(255,215,0,0.8)",letterSpacing:"1px",fontWeight:700}}>💡 Hints used: {totalHints}</div>)}
-          <div className="results-btns" style={{justifyContent: score===total ? 'center' : 'flex-start'}}>
-            {score < total && <button className="btn btn-replay" onClick={playAgain}>⚡ TRAIN AGAIN!</button>}
+          <div className="results-btns">
+            <button className="btn btn-replay" onClick={playAgain}>⚡ TRAIN AGAIN!</button>
             <button className="btn btn-secondary" onClick={()=>setPhase("setup")}>🏠 Home</button>
           </div>
         </div>
