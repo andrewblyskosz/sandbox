@@ -609,7 +609,7 @@ function Game() {
                   <span className="word-num">{i+1}</span>
                   <input className="word-input" placeholder={"word "+(i+1)} value={words[i]}
                     style={highlight}
-                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); }}
+                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); jbSave({words:u.map(w=>w.trim())}); }}
                     onKeyDown={e=>{
                       if(e.key==="Enter"){
                         const all=document.querySelectorAll(".word-input");
