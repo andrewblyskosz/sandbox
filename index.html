@@ -453,8 +453,9 @@ function Game() {
     setSelectedGrade(grade);
     const pool = [...gradeWords[grade]];
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-    setWords(pool.slice(0,20).concat(Array(Math.max(0,20-pool.length)).fill('')));
-    setTimeout(()=>jbSave({grade:grade}),100);
+    const newWords = pool.slice(0,20).concat(Array(Math.max(0,20-pool.length)).fill(''));
+    setWords(newWords);
+    setTimeout(()=>jbSave({grade:grade, words:newWords.map(w=>w.trim())}),200);
   }
 
 
@@ -685,7 +686,7 @@ function Game() {
                   <span className="word-num">{i+1}</span>
                   <input className="word-input" placeholder={"word "+(i+1)} value={words[i]}
                     style={highlight}
-                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); }}
+                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); jbSave({words:u.map(w=>w.trim()),grade:null}); }}
                     onKeyDown={e=>{
                       if(e.key==="Enter"){
                         const all=document.querySelectorAll(".word-input");
