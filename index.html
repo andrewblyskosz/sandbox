@@ -420,11 +420,14 @@ function Game() {
     setActiveMode(newMode);
     if(newSlot && newSlot.words && newSlot.words.filter(w=>w).length>0){
       applySlot(newSlot);
+      allSlotsRef.current.activeMode = newMode;
+      setTimeout(()=>jbSave({}), 300);
     } else {
-      setWords(Array(20).fill('')); setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null);
+      setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null);
+      allSlotsRef.current.activeMode = newMode;
+      if(newMode==='random') randomFill();
+      else { setWords(Array(20).fill('')); setTimeout(()=>jbSave({}), 300); }
     }
-    allSlotsRef.current.activeMode = newMode;
-    setTimeout(()=>jbSave({}), 300);
   };
 
   const jbLoad = () => {
