@@ -388,7 +388,7 @@ function Game() {
         body:JSON.stringify(payload)
       })
       .then(r=>r.json())
-      .then(()=>{ isSaving.current=false; showToast("✓ Saved","success"); })
+      .then(()=>{ isSaving.current=false; showToast("✓ Saved","success"); try{ localStorage.setItem('spellmaster_cache', JSON.stringify(payload)); }catch(e){} })
       .catch(()=>{ isSaving.current=false; });
     },800);
   };
@@ -433,21 +433,39 @@ function Game() {
   };
 
   const jbLoad = () => {
+    // ── Step 1: Load from localStorage instantly ──
+    try {
+      const cached = localStorage.getItem('spellmaster_cache');
+      if(cached){
+        const rec = JSON.parse(cached);
+        allSlotsRef.current = rec;
+        const savedMode = rec.activeMode || 'mywords';
+        setActiveMode(savedMode);
+        const slot = rec[savedMode];
+        if(slot) applySlot(slot);
+        setIsLoading(false);
+        console.log("Loaded from cache instantly");
+      }
+    } catch(e){ console.log("No cache"); }
+
+    // ── Step 2: Sync with JSONbin in background ──
     fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
       headers:{"X-Master-Key":JSONBIN_KEY}
     })
     .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
     .then(data=>{
       const rec = data.record || data;
-      console.log("Loaded slots:", Object.keys(rec));
+      console.log("Synced from JSONbin");
       allSlotsRef.current = rec;
+      // Save to localStorage for next time
+      try{ localStorage.setItem('spellmaster_cache', JSON.stringify(rec)); }catch(e){}
       const savedMode = rec.activeMode || 'mywords';
       setActiveMode(savedMode);
       const slot = rec[savedMode];
       if(slot) applySlot(slot);
     })
-    .catch(e=>console.error("Load failed:",e))
-    .finally(()=>{ loadedRef.current=true; console.log("Load complete"); });
+    .catch(e=>console.log("JSONbin sync failed, using cache"))
+    .finally(()=>{ loadedRef.current=true; setIsLoading(false); });
   }
 
   // Load once on mount
@@ -468,6 +486,7 @@ function Game() {
   const [countdown,     setCountdown]    = useState(null);
   const countdownRef = useRef(null);
   const [modal, setModal] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeMode, setActiveMode] = useState(null); // 'mywords' | 'random' | null
 
 
@@ -637,6 +656,14 @@ function Game() {
   return (
     <div id="app-inner" style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",minHeight:"100vh",padding:"12px 20px 18px"}}>
 
+      {isLoading && !allSlotsRef.current.activeMode && (
+        <div style={{position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(7,7,26,0.85)'}}>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:'2rem',marginBottom:'12px',animation:'spin 1s linear infinite',display:'inline-block'}}>⚡</div>
+            <div style={{fontFamily:"'Bangers',cursive",fontSize:'1.2rem',letterSpacing:'4px',color:'rgba(255,255,255,0.6)'}}>LOADING YOUR WORDS...</div>
+          </div>
+        </div>
+      )}
       {flash && <div className={"flash flash-"+flash} key={flash+Date.now()}/>}
       {toast && <div className={"toast toast-"+toast.type}>{toast.msg}</div>}
       {particles.map(p=>(
