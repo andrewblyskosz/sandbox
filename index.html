@@ -640,6 +640,7 @@ function Game() {
                 allSlotsRef.current[curKey] = {words:words.map(w=>w.trim()),phase,shuffled,wordIdx:idx,results,tries};
                 setActiveMode('mywords');
                 const saved = allSlotsRef.current['mywords'];
+                console.log("MY WORDS clicked, slot:", saved, "allSlots keys:", Object.keys(allSlotsRef.current));
                 if(saved && saved.words && saved.words.filter(w=>w).length>0){
                   applySlot(saved);
                 } else {
