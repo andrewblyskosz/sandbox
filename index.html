@@ -435,6 +435,16 @@ function Game() {
 
 
 
+
+  const grade6Pool = ['accommodate', 'acknowledge', 'aggressive', 'ambiguous', 'approximately', 'benevolent', 'circumstances', 'coincidence', 'contemporary', 'controversy', 'correspond', 'dilemma', 'eloquent', 'equivalent', 'exaggerate', 'extraordinary', 'humiliating', 'hypocrite', 'inevitable', 'ingenious', 'legitimate', 'lieutenant', 'maintenance', 'millennium', 'mischievous', 'misspell', 'mountainous', 'necessary', 'negotiate', 'neighborhood', 'nuisance', 'obstacle', 'occurrence', 'offensive', 'omission', 'opportunity', 'optimistic', 'outrageous', 'particular', 'passionate', 'perceive', 'performance', 'persistence', 'perspective', 'phenomenon', 'playwright', 'plausible', 'politician', 'possession', 'precede', 'prejudice', 'predominant', 'presumptuous', 'privilege', 'proceeding', 'proficient', 'proportion', 'prosecutor', 'psychiatry', 'psychology', 'publicity', 'punctuation', 'qualification', 'questionnaire', 'reasonable', 'recession', 'recommend', 'rehabilitation', 'rehearsal', 'relevance', 'representative', 'reputation', 'resistance', 'responsibility', 'satirical', 'scarcely', 'scholarly', 'skeptical', 'sophomore', 'statistics', 'subordinate', 'substantial', 'sufficient', 'summarize', 'supernatural', 'suppression', 'suspicious', 'technically', 'temporary', 'tendency', 'tolerance', 'tournament', 'transparent', 'tremendous', 'uncertain', 'unforgettable', 'universal', 'unnecessary', 'unpredictable', 'vocabulary', 'volunteer', 'vulnerable', 'wilderness', 'withdrawal', 'worthwhile', 'abundance', 'accessible', 'accomplishment', 'accountable', 'accumulate', 'accurately', 'achievement', 'acquisition', 'additionally', 'adequately', 'administration', 'admirable', 'advancement', 'affectionate', 'affordable', 'allegiance', 'altogether', 'ambition', 'amendment', 'amplify', 'analysis', 'antagonist', 'anticipate', 'apologetic', 'applicable', 'appreciation', 'appropriate', 'argumentative', 'arrangement', 'articulate', 'assassination', 'assessment', 'assignment', 'assistance', 'assumption', 'atmosphere', 'attentive', 'attribute', 'authoritative', 'awareness', 'behavioral', 'beneficial', 'biological', 'capability', 'captivating', 'categorical', 'causation', 'celebratory', 'characteristic', 'charitable', 'chronicle', 'circumstantial', 'civilization', 'collaborate', 'commentary', 'commission', 'commitment', 'communicate', 'comparative', 'compassionate', 'competition', 'complement', 'comprehension', 'concentration', 'confrontation', 'congregation', 'consciousness', 'contamination', 'contradiction', 'controversial', 'coordination', 'corroboration', 'cultivation', 'declaration', 'demonstration', 'determination', 'differentiation', 'discrimination', 'documentation', 'elaboration', 'elimination', 'empowerment', 'encouragement', 'enlightenment', 'environmental', 'exoneration', 'explanation', 'exploitation', 'facilitation', 'falsification', 'globalization', 'humanization', 'identification', 'imagination', 'implementation'];
+
+  function randomFill() {
+    const pool = [...grade6Pool];
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    const newWords = pool.slice(0,20);
+    setWords(newWords);
+    jbSave({words:newWords});
+  }
   const refocus = () => setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50);
 
   function useHint() {
@@ -588,13 +598,20 @@ function Game() {
       {/* ══ SETUP ══ */}
       {phase==="setup" && (
         <div className="card" style={{maxHeight:"calc(100vh - 50px)",overflowY:"auto",marginBottom:"24px"}}>
-          <div style={{textAlign:'center',marginBottom:'10px'}}>
+          <div style={{display:'flex',gap:'8px',justifyContent:'center',marginBottom:'10px'}}>
             <button
-              onClick={()=>{ setWords(Array(20).fill('')); setResults([]); }}
+              onClick={()=>{ setWords(Array(20).fill('')); setResults([]); jbSave({words:Array(20).fill('')}); }}
               onMouseOver={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.3),rgba(191,95,255,0.3))';}}
               onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))';}}
-              style={{background:'linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))',border:'1px solid rgba(255,45,120,0.4)',borderRadius:'20px',padding:'6px 24px',color:'#fff',fontWeight:700,fontSize:'0.85rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s'}}>
+              style={{background:'linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))',border:'1px solid rgba(255,45,120,0.4)',borderRadius:'20px',padding:'6px 20px',color:'#fff',fontWeight:700,fontSize:'0.85rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s'}}>
               ✏️ MY WORDS
+            </button>
+            <button
+              onClick={()=>randomFill()}
+              onMouseOver={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.3),rgba(191,95,255,0.3))';}}
+              onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))';}}
+              style={{background:'linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))',border:'1px solid rgba(255,45,120,0.4)',borderRadius:'20px',padding:'6px 20px',color:'#fff',fontWeight:700,fontSize:'0.85rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s'}}>
+              🎲 RANDOM FILL
             </button>
           </div>
 
