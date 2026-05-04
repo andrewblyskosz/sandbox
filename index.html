@@ -359,21 +359,27 @@ function Game() {
   const isSaving = useRef(false);
   const loadedRef = useRef(false);
 
+  const allSlotsRef = React.useRef({});
+
   const jbSave = (overrides={}) => {
-    if(!loadedRef.current){ console.log("Save blocked - still loading"); return; }
+    if(!loadedRef.current) return;
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
       if(isSaving.current) return;
       isSaving.current = true;
-      const payload = Object.assign({
+      const slotKey = activeMode || 'mywords';
+      const currentSlot = Object.assign({
         words: words.map(w=>w.trim()),
-        phase,
-        shuffled,
-        wordIdx: idx,
-        results,
-        tries
+        phase, shuffled, wordIdx: idx, results, tries
       }, overrides);
-      console.log("Saving results:",payload.results,"grade:",payload.grade);
+      // Always save current slot AND preserve the other slot
+      allSlotsRef.current[slotKey] = currentSlot;
+      allSlotsRef.current.activeMode = slotKey;
+      // Ensure both slots exist in payload
+      if(!allSlotsRef.current['mywords']) allSlotsRef.current['mywords'] = {words:[],phase:"setup",shuffled:[],wordIdx:0,results:[],tries:0};
+      if(!allSlotsRef.current['random']) allSlotsRef.current['random'] = {words:[],phase:"setup",shuffled:[],wordIdx:0,results:[],tries:0};
+      const payload = Object.assign({}, allSlotsRef.current);
+      console.log("Saving slot:", slotKey);
       fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
         method:"PUT",
         headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
@@ -385,34 +391,59 @@ function Game() {
     },800);
   };
 
+  const applySlot = (slot) => {
+    if(!slot) return;
+    if(slot.words && Array.isArray(slot.words)){
+      const filled = [...slot.words,...Array(Math.max(0,20-slot.words.length)).fill("")].slice(0,20);
+      setWords(filled);
+    }
+    if(slot.results && slot.results.length>0) setResults(slot.results);
+    else setResults([]);
+    if(slot.phase==="game" && slot.shuffled && slot.shuffled.length>0){
+      setShuffled(slot.shuffled);
+      setIdx(slot.wordIdx||0);
+      setTries(slot.tries||0);
+      setResumeData({shuffled:slot.shuffled,wordIdx:slot.wordIdx||0,tries:slot.tries||0,results:slot.results||[]});
+    } else {
+      setPhase("setup"); setShuffled([]); setIdx(0); setTries(0); setResumeData(null);
+    }
+  };
+
+  const switchMode = (newMode) => {
+    // Save current slot
+    const curKey = activeMode || 'mywords';
+    allSlotsRef.current[curKey] = {
+      words: words.map(w=>w.trim()), phase, shuffled, wordIdx: idx, results, tries
+    };
+    // Load new slot if it exists
+    const newSlot = allSlotsRef.current[newMode];
+    setActiveMode(newMode);
+    if(newSlot && newSlot.words && newSlot.words.filter(w=>w).length>0){
+      applySlot(newSlot);
+    } else {
+      setWords(Array(20).fill('')); setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase("setup"); setResumeData(null);
+    }
+    allSlotsRef.current.activeMode = newMode;
+    setTimeout(()=>jbSave({}), 300);
+  };
+
   const jbLoad = () => {
     fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID+"/latest",{
       headers:{"X-Master-Key":JSONBIN_KEY}
     })
     .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
     .then(data=>{
-      console.log("Raw load:",JSON.stringify(data).slice(0,200));
-      console.log("Step 1 - parsing rec");
       const rec = data.record || data;
-      console.log("Step 2 - rec:",!!rec,"words:",rec&&rec.words&&rec.words.length,"isArray:",rec&&Array.isArray(rec.words),"grade:",rec&&rec.grade);
-      if(!rec) return;
-      if(rec.words && Array.isArray(rec.words)){
-        const filled = [...rec.words,...Array(Math.max(0,20-rec.words.length)).fill("")].slice(0,20);
-        console.log("Step 3 - Setting words:",filled.filter(w=>w).length,"words");
-        setWords(filled);
-      }
-      console.log("Step 4 - setting grade:",rec.grade);
-      if(rec.grade !== null && rec.grade !== undefined) setSelectedGrade(rec.grade);
-      console.log("Step 5 - done");
-      console.log("Restoring results:",rec.results);
-      if(rec.results && rec.results.length>0) setResults(rec.results);
-      if(rec.phase==="game" && rec.shuffled && rec.shuffled.length>0){
-        setResumeData({shuffled:rec.shuffled, wordIdx:rec.wordIdx||0, tries:rec.tries||0, results:rec.results||[]});
-      }
+      console.log("Loaded slots:", Object.keys(rec));
+      allSlotsRef.current = rec;
+      const savedMode = rec.activeMode || 'mywords';
+      setActiveMode(savedMode);
+      const slot = rec[savedMode];
+      if(slot) applySlot(slot);
     })
     .catch(e=>console.error("Load failed:",e))
-    .finally(()=>{ loadedRef.current=true; console.log("Load complete - saves now enabled"); });
-  };
+    .finally(()=>{ loadedRef.current=true; console.log("Load complete"); });
+  }
 
   // Load once on mount
   useEffect(()=>{ jbLoad(); },[]);
@@ -444,7 +475,7 @@ function Game() {
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     const newWords = pool.slice(0,20);
     setWords(newWords);
-    jbSave({words:newWords});
+    setTimeout(()=>jbSave({words:newWords}),200);
   }
   const refocus = () => setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50);
 
@@ -601,7 +632,7 @@ function Game() {
         <div className="card" style={{maxHeight:"calc(100vh - 50px)",overflowY:"auto",marginBottom:"24px"}}>
           <div style={{display:'flex',gap:'8px',justifyContent:'center',marginBottom:'10px'}}>
             <button
-              onClick={()=>{ setWords(Array(20).fill('')); setResults([]); setActiveMode('mywords'); jbSave({words:Array(20).fill('')}); }}
+              onClick={()=>switchMode('mywords')}
               onMouseOver={e=>{if(activeMode!=='mywords'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.3),rgba(191,95,255,0.3)';}}}
               onMouseOut={e=>{if(activeMode!=='mywords'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))';}}}
               style={{
@@ -613,7 +644,7 @@ function Game() {
               {activeMode==='mywords' ? '✓ ' : '✏️ '}MY WORDS
             </button>
             <button
-              onClick={()=>{ setActiveMode('random'); randomFill(); }}
+              onClick={()=>{ switchMode('random'); }}
               onMouseOver={e=>{if(activeMode!=='random'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.3),rgba(191,95,255,0.3)';}}}
               onMouseOut={e=>{if(activeMode!=='random'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))';}}}
               style={{
@@ -648,7 +679,7 @@ function Game() {
                   <span className="word-num">{i+1}</span>
                   <input className="word-input" placeholder={"word "+(i+1)} value={words[i]}
                     style={highlight}
-                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); setActiveMode(null); jbSave({words:u.map(w=>w.trim())}); }}
+                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); jbSave({words:u.map(w=>w.trim())}); }}
                     onKeyDown={e=>{
                       if(e.key==="Enter"){
                         const all=document.querySelectorAll(".word-input");
