@@ -537,7 +537,7 @@ function Game() {
       if(hintedPos.includes(i)) return letter;
       return answer[i]||'';
     }).join('');
-    const ok = fullAnswer.toLowerCase()===word.toLowerCase() && !fullAnswer.includes('');
+    const ok = fullAnswer.toLowerCase()===word.toLowerCase();
     if(ok) {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
