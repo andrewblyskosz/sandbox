@@ -542,19 +542,19 @@ function Game() {
       doFlash("gold"); burst(); triggerBgGlow("correct");
       setFeedback("correct");
       setResults(r=>[...r,{word,ok:true}]);
-      setCountdown(5);
-      let c=5; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
-      setTimeout(()=>advance(shuffled,idx), 5000);
+      setCountdown(3);
+      let c=3; countdownRef.current=setInterval(()=>{ c--; if(c<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(c);} },1000);
+      setTimeout(()=>advance(shuffled,idx), 3000);
     } else if(tries===0) {
       setFeedback("try"); setTries(1);
-      setTimeout(()=>{ setFeedback(null); setAnswer(""); inputRef.current?.focus(); },1900);
+      setTimeout(()=>{ setFeedback(null); setAnswer(""); setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50); },3000);
     } else {
       doFlash("red"); triggerBgGlow("wrong");
       setFeedback("wrong");
       setResults(r=>{ const nr=[...r,{word,ok:false}]; setTimeout(()=>jbSave({results:nr,wordIdx:idx}),200); return nr; });
-      setCountdown(2);
-      let cw=2; countdownRef.current=setInterval(()=>{ cw--; if(cw<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(cw);} },1000);
-      setTimeout(()=>advance(shuffled,idx), 2000);
+      setCountdown(5);
+      let cw=5; countdownRef.current=setInterval(()=>{ cw--; if(cw<=0){clearInterval(countdownRef.current);setCountdown(null);}else{setCountdown(cw);} },1000);
+      setTimeout(()=>advance(shuffled,idx), 5000);
     }
   };
 
