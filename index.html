@@ -635,7 +635,19 @@ function Game() {
         <div className="card" style={{maxHeight:"calc(100vh - 50px)",overflowY:"auto",marginBottom:"24px"}}>
           <div style={{display:'flex',gap:'8px',justifyContent:'center',marginBottom:'10px'}}>
             <button
-              onClick={()=>switchMode('mywords')}
+              onClick={()=>{
+                const curKey = activeMode || 'mywords';
+                allSlotsRef.current[curKey] = {words:words.map(w=>w.trim()),phase,shuffled,wordIdx:idx,results,tries};
+                setActiveMode('mywords');
+                const saved = allSlotsRef.current['mywords'];
+                if(saved && saved.words && saved.words.filter(w=>w).length>0){
+                  applySlot(saved);
+                } else {
+                  setWords(Array(20).fill('')); setResults([]); setShuffled([]); setIdx(0); setTries(0); setPhase('setup'); setResumeData(null);
+                }
+                allSlotsRef.current.activeMode = 'mywords';
+                setTimeout(()=>jbSave({}),300);
+              }}
               onMouseOver={e=>{if(activeMode!=='mywords'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.3),rgba(191,95,255,0.3)';}}}
               onMouseOut={e=>{if(activeMode!=='mywords'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))';}}}
               style={{
@@ -647,7 +659,15 @@ function Game() {
               {activeMode==='mywords' ? '✓ ' : '✏️ '}MY WORDS
             </button>
             <button
-              onClick={()=>{ switchMode('random'); }}
+              onClick={()=>{
+                setActiveMode('random');
+                const curKey = activeMode || 'mywords';
+                allSlotsRef.current[curKey] = {words:words.map(w=>w.trim()),phase,shuffled,wordIdx:idx,results,tries};
+                if(words.filter(w=>w.trim()).length>0){
+                  if(!window.confirm('Replace all words with new random words?')) return;
+                }
+                randomFill();
+              }}
               onMouseOver={e=>{if(activeMode!=='random'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.3),rgba(191,95,255,0.3)';}}}
               onMouseOut={e=>{if(activeMode!=='random'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))';}}}
               style={{
@@ -666,6 +686,21 @@ function Game() {
               onMouseOut={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(0,200,255,0.15),rgba(0,100,200,0.15))';}}
               style={{background:'linear-gradient(135deg,rgba(0,200,255,0.15),rgba(0,100,200,0.15))',border:'1px solid rgba(0,200,255,0.5)',borderRadius:'20px',padding:'5px 20px',color:'#00C8FF',fontWeight:700,fontSize:'0.75rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s'}}>
               💾 SAVE
+            </button>
+          </div>
+          <div style={{textAlign:'center',marginBottom:'8px'}}>
+            <button onClick={()=>{
+                const slot = allSlotsRef.current[activeMode||'mywords'];
+                if(slot && slot.words && slot.words.filter(w=>w).length>0){
+                  applySlot(slot);
+                } else {
+                  showToast('No saved game found','error');
+                }
+              }}
+              onMouseOver={e=>{e.currentTarget.style.background='rgba(255,215,0,0.3)';}}
+              onMouseOut={e=>{e.currentTarget.style.background='rgba(255,215,0,0.12)';}}
+              style={{background:'rgba(255,215,0,0.12)',border:'1px solid rgba(255,215,0,0.5)',borderRadius:'20px',padding:'5px 20px',color:'#FFD700',fontWeight:700,fontSize:'0.75rem',letterSpacing:'2px',cursor:'pointer',transition:'all .2s'}}>
+              📂 LOAD LAST GAME
             </button>
           </div>
                     <div className="words-grid">
