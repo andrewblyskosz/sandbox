@@ -660,13 +660,25 @@ function Game() {
             </button>
             <button
               onClick={()=>{
-                setActiveMode('random');
+                // If already on random tab - confirm before generating new words
+                if(activeMode==='random'){
+                  if(!window.confirm('Replace all words with new random words?')) return;
+                  randomFill();
+                  return;
+                }
+                // Switching FROM another tab - save current slot, load random slot
                 const curKey = activeMode || 'mywords';
                 allSlotsRef.current[curKey] = {words:words.map(w=>w.trim()),phase,shuffled,wordIdx:idx,results,tries};
-                if(words.filter(w=>w.trim()).length>0){
-                  if(!window.confirm('Replace all words with new random words?')) return;
+                setActiveMode('random');
+                const savedRandom = allSlotsRef.current['random'];
+                if(savedRandom && savedRandom.words && savedRandom.words.filter(w=>w).length>0){
+                  applySlot(savedRandom);
+                  allSlotsRef.current.activeMode = 'random';
+                  setTimeout(()=>jbSave({}),300);
+                } else {
+                  allSlotsRef.current.activeMode = 'random';
+                  randomFill();
                 }
-                randomFill();
               }}
               onMouseOver={e=>{if(activeMode!=='random'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.3),rgba(191,95,255,0.3)';}}}
               onMouseOut={e=>{if(activeMode!=='random'){e.currentTarget.style.background='linear-gradient(135deg,rgba(255,45,120,0.15),rgba(191,95,255,0.15))';}}}
