@@ -480,7 +480,18 @@ function Game() {
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     const newWords = pool.slice(0,20);
     setWords(newWords);
-    setTimeout(()=>jbSave({words:newWords}),200);
+    // Explicitly save into 'random' slot regardless of activeMode state timing
+    setTimeout(()=>{
+      allSlotsRef.current['random'] = {words:newWords, phase:"setup", shuffled:[], wordIdx:0, results:[], tries:0};
+      allSlotsRef.current.activeMode = 'random';
+      if(!allSlotsRef.current['mywords']) allSlotsRef.current['mywords'] = {words:[], phase:"setup", shuffled:[], wordIdx:0, results:[], tries:0};
+      const payload = Object.assign({}, allSlotsRef.current);
+      fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY},
+        body:JSON.stringify(payload)
+      }).catch(()=>{});
+    },200);
   }
   const refocus = () => setTimeout(()=>{ if(inputRef.current){ inputRef.current.focus(); inputRef.current.click(); } },50);
 
@@ -732,7 +743,13 @@ function Game() {
                   <span className="word-num">{i+1}</span>
                   <input className="word-input" placeholder={"word "+(i+1)} value={words[i]}
                     style={highlight}
-                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u); jbSave({words:u.map(w=>w.trim())}); }}
+                    onChange={e=>{ const u=[...words]; u[i]=e.target.value; setWords(u);
+                      // Explicitly save to mywords slot when typing
+                      const slotKey = activeMode || 'mywords';
+                      allSlotsRef.current[slotKey] = Object.assign(allSlotsRef.current[slotKey]||{}, {words:u.map(w=>w.trim())});
+                      allSlotsRef.current.activeMode = slotKey;
+                      jbSave({words:u.map(w=>w.trim())});
+                    }}
                     onKeyDown={e=>{
                       if(e.key==="Enter"){
                         const all=document.querySelectorAll(".word-input");
