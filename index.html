@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>yvi</title>
+<title>yvi2</title>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Spell Master"/>
@@ -484,9 +484,9 @@ a[href="./"]:hover{transform:translateY(-2px) scale(1.06) !important;background:
 <body>
 <div id="splash">
   <div class="splash-content">
-    <div class="splash-hunters">yvi</div>
+    <div class="splash-hunters">yvi2</div>
     <div class="splash-divider"></div>
-    <div class="splash-word-slayer">yvi master</div>
+    <div class="splash-word-slayer">yvi master2</div>
   </div>
 </div>
 <div id="bg-glow"></div>
@@ -514,7 +514,7 @@ function Game() {
   const [toast,     setToast]     = useState(null);
   const inputRef = useRef(null);
 
-  const JSONBIN_ID = "69f4bb4a36566621a8134d13";
+  const JSONBIN_ID = "69fd0658250b1311c31b5484";
   const JSONBIN_KEY = "$2a$10$ZmohFEKQaFz/Ag31Eov7I.pYkzvW4GDsS1lXI0HcUG/Qv6sqOBVA.";
   const saveTimerRef = useRef(null);
   const isSaving = useRef(false);
@@ -547,7 +547,7 @@ function Game() {
         body:JSON.stringify(payload)
       })
       .then(r=>r.json())
-      .then(()=>{ isSaving.current=false; showToast("✓ Saved","success"); try{ localStorage.setItem('spellmaster_yvi_cache', JSON.stringify(payload)); }catch(e){} })
+      .then(()=>{ isSaving.current=false; showToast("✓ Saved","success"); try{ localStorage.setItem('spellmaster_yvi2_cache', JSON.stringify(payload)); }catch(e){} })
       .catch(()=>{ isSaving.current=false; });
     },800);
   };
@@ -594,7 +594,7 @@ function Game() {
   const jbLoad = () => {
     // ── Step 1: Load from localStorage instantly ──
     try {
-      const cached = localStorage.getItem('spellmaster_yvi_cache');
+      const cached = localStorage.getItem('spellmaster_yvi2_cache');
       if(cached){
         const rec = JSON.parse(cached);
         allSlotsRef.current = rec;
@@ -617,7 +617,7 @@ function Game() {
       console.log("Synced from JSONbin");
       allSlotsRef.current = rec;
       // Save to localStorage for next time
-      try{ localStorage.setItem('spellmaster_yvi_cache', JSON.stringify(rec)); }catch(e){}
+      try{ localStorage.setItem('spellmaster_yvi2_cache', JSON.stringify(rec)); }catch(e){}
       const savedMode = rec.activeMode || 'mywords';
       setActiveMode(savedMode);
       const slot = rec[savedMode];
@@ -651,7 +651,7 @@ function Game() {
 
 
 
-  const grade6Pool = ['accommodate', 'acknowledge', 'aggressive', 'ambiguous', 'approximately', 'benevolent', 'circumstances', 'coincidence', 'contemporary', 'controversy', 'correspond', 'dilemma', 'eloquent', 'equivalent', 'exaggerate', 'extraordinary', 'humiliating', 'hypocrite', 'inevitable', 'ingenious', 'legitimate', 'lieutenant', 'maintenance', 'millennium', 'mischievous', 'misspell', 'mountainous', 'necessary', 'negotiate', 'neighborhood', 'nuisance', 'obstacle', 'occurrence', 'offensive', 'omission', 'opportunity', 'optimistic', 'outrageous', 'particular', 'passionate', 'perceive', 'performance', 'persistence', 'perspective', 'phenomenon', 'playwright', 'plausible', 'politician', 'possession', 'precede', 'prejudice', 'predominant', 'presumptuous', 'privilege', 'proceeding', 'proficient', 'proportion', 'prosecutor', 'psychiatry', 'psychology', 'publicity', 'punctuation', 'qualification', 'questionnaire', 'reasonable', 'recession', 'recommend', 'rehabilitation', 'rehearsal', 'relevance', 'representative', 'reputation', 'resistance', 'responsibility', 'satirical', 'scarcely', 'scholarly', 'skeptical', 'sophomore', 'statistics', 'subordinate', 'substantial', 'sufficient', 'summarize', 'supernatural', 'suppression', 'suspicious', 'technically', 'temporary', 'tendency', 'tolerance', 'tournament', 'transparent', 'tremendous', 'uncertain', 'unforgettable', 'universal', 'unnecessary', 'unpredictable', 'vocabulary', 'volunteer', 'vulnerable', 'wilderness', 'withdrawal', 'worthwhile', 'abundance', 'accessible', 'accomplishment', 'accountable', 'accumulate', 'accurately', 'achievement', 'acquisition', 'additionally', 'adequately', 'administration', 'admirable', 'advancement', 'affectionate', 'affordable', 'allegiance', 'altogether', 'ambition', 'amendment', 'amplify', 'analysis', 'antagonist', 'anticipate', 'apologetic', 'applicable', 'appreciation', 'appropriate', 'argumentative', 'arrangement', 'articulate', 'assassination', 'assessment', 'assignment', 'assistance', 'assumption', 'atmosphere', 'attentive', 'attribute', 'authoritative', 'awareness', 'behavioral', 'beneficial', 'biological', 'capability', 'captivating', 'categorical', 'causation', 'celebratory', 'characteristic', 'charitable', 'chronicle', 'circumstantial', 'civilization', 'collaborate', 'commentary', 'commission', 'commitment', 'communicate', 'comparative', 'compassionate', 'competition', 'complement', 'comprehension', 'concentration', 'confrontation', 'congregation', 'consciousness', 'contamination', 'contradiction', 'controversial', 'coordination', 'corroboration', 'cultivation', 'declaration', 'demonstration', 'determination', 'differentiation', 'discrimination', 'documentation', 'elaboration', 'elimination', 'empowerment', 'encouragement', 'enlightenment', 'environmental', 'exoneration', 'explanation', 'exploitation', 'facilitation', 'falsification', 'globalization', 'humanization', 'identification', 'imagination', 'implementation'];
+  const grade6Pool = ["apple1", "apple2", "apple3", "apple4", "apple5", "apple6", "apple7", "apple8", "apple9", "apple10", "apple11", "apple12", "apple13", "apple14", "apple15", "apple16", "apple17", "apple18", "apple19", "apple20"];
 
   function randomFill() {
     const pool = [...grade6Pool];
@@ -1120,8 +1120,8 @@ function Game() {
               <div className="modal-title">ℹ️ About</div>
               <div className="modal-body">
                 <p style={{marginBottom:16}}>
-                  <strong style={{color:"#FFD700",fontSize:"1.05rem"}}>yvi - yvi master</strong><br/>
-                  <span style={{color:"rgba(255,255,255,.6)",fontSize:".85rem"}}>Andrew Blyskosz &nbsp;·&nbsp; © 2026 &nbsp;·&nbsp; Version 99 &nbsp;·&nbsp; Bin: 69f4bb4a36566621a8134d13</span>
+                  <strong style={{color:"#FFD700",fontSize:"1.05rem"}}>yvi2 - yvi master2</strong><br/>
+                  <span style={{color:"rgba(255,255,255,.6)",fontSize:".85rem"}}>Andrew Blyskosz &nbsp;·&nbsp; © 2026 &nbsp;·&nbsp; Version 992 &nbsp;·&nbsp; Bin: 69fd0658250b1311c31b5484</span>
                 </p>
                 <p style={{marginBottom:8,color:"rgba(255,255,255,.5)",fontSize:".8rem",letterSpacing:"1px",textTransform:"uppercase",fontWeight:800}}>Support the developer</p>
                 <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
@@ -1152,7 +1152,7 @@ function Game() {
                   <li>Your words load automatically — or tap <strong style={{color:"#00e676"}}>🎲 Random Words</strong> to auto-fill 20 random words.</li>
                   <li>Hit <strong style={{color:"#FF2D78"}}>✨ Let's Spell!</strong> when you're ready to start.</li>
                   <li>Press <strong style={{color:"#00F5FF"}}>🔊 Hear the Word</strong> to listen, then type your answer and hit <strong style={{color:"#FF2D78"}}>⚡ Submit</strong>.</li>
-                  <li>You get <strong>2 tries</strong> per word. Stuck? Tap <strong style={{color:"#FFD700"}}>yvi - yvi master</strong> to reveal the next hidden letter (max 2 hints per word).</li>
+                  <li>You get <strong>2 tries</strong> per word. Stuck? Tap <strong style={{color:"#FFD700"}}>yvi2 - yvi master2</strong> to reveal the next hidden letter (max 2 hints per word).</li>
                   <li>After each word, the correct spelling is shown for <strong>5 seconds</strong> so you can review it.</li>
                   <li>Your progress saves automatically — come back anytime and pick up right where you left off!</li>
                   <li>At the end, use <strong style={{color:"#FF7777"}}>🔁 Redo Wrong Words</strong> to drill the ones you missed.</li>
@@ -1185,7 +1185,7 @@ ReactDOM.createRoot(document.getElementById("app")).render(<Game/>);
 
 <script>
 (function() {
-  var GRADE = '4';
+  var GRADE = '5';
 
   var BADGE_CSS = [
     'position:absolute',
