@@ -40,7 +40,8 @@ body::before{
 
 #app{
   position:relative;z-index:1;
-  display:flex;flex-direction:column;align-items:center;
+  display:none;
+  flex-direction:column;align-items:center;
   justify-content:center;
   min-height:100vh;
   padding:20px 24px;
@@ -1195,9 +1196,15 @@ ReactDOM.createRoot(document.getElementById("app")).render(<Game/>);
   setTimeout(function(){
     splash.classList.add('fade-out');
     setTimeout(function(){
-      splash.style.display='none';
+      splash.style.display = 'none';
       var app = document.getElementById('app');
-      if(app) app.style.opacity = '1';
+      if(!app) return;
+      app.style.display = 'flex';
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          app.style.opacity = '1';
+        });
+      });
     }, 800);
   }, 4000);
 })();
