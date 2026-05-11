@@ -407,6 +407,11 @@ body::before{
     overflow-y: auto !important;
   }
 
+  .card {
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+
   #app-inner {
     padding: 10px 20px !important;
   }
@@ -751,7 +756,7 @@ function Game() {
     if(!valid.length) return;
     const s=[...valid].sort(()=>Math.random()-.5);
     setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0);
-    setAnswer(""); setFeedback(null); setPhase("game");
+    setAnswer(""); setHintedPos([]); setFeedback(null); setPhase("game");
   };
 
   const advance = (sArr, i) => {
@@ -815,7 +820,7 @@ function Game() {
   const playAgain = () => {
     const s=[...shuffled].sort(()=>Math.random()-.5);
     setShuffled(s); setIdx(0); setTries(0); setResults([]); setTotalHints(0); setHints(0);
-    setAnswer(""); setFeedback(null); setPhase("game");
+    setAnswer(""); setHintedPos([]); setFeedback(null); setPhase("game");
   };
 
   const score = results.filter(r=>r.ok).length;
@@ -1057,6 +1062,11 @@ function Game() {
               <span className="try-label">{tries===0?"2 tries left":"last chance!"}</span>
             </div>
           </div>
+          {totalHints>0&&(
+            <div style={{textAlign:"right",fontSize:".65rem",fontWeight:800,letterSpacing:"1.5px",color:"rgba(255,215,0,0.65)",textTransform:"uppercase",marginBottom:"6px",position:"relative",zIndex:1}}>
+              💡 {totalHints} hint{totalHints===1?"":"s"} used
+            </div>
+          )}
 
           <div className="speak-section">
             <div className="speak-hint">👂 Listen carefully, then spell the word!</div>
@@ -1087,7 +1097,7 @@ function Game() {
             <button className="btn btn-submit" onClick={()=>{ submit(); refocus(); }} disabled={!!feedback}><span>⚡</span><span>SUBMIT</span></button>
             <button className="btn btn-secondary" style={{color:"#AAAAFF",borderColor:"rgba(150,150,255,.3)"}} onClick={()=>{ skipWord(); refocus(); }} disabled={!!feedback}>⏭ Skip</button>
             <button className="btn btn-secondary" onClick={()=>{ useHint(); refocus(); }} disabled={!!feedback||hints>=2} style={{color:hints>=2?"rgba(255,255,255,0.3)":"#FFD700",borderColor:hints>=2?"rgba(255,255,255,0.1)":"rgba(255,215,0,0.4)",cursor:hints>=2?"not-allowed":"pointer"}}>💡 Hint{hints>0?` (${hints}/2)`:""}</button>
-            <button className="btn btn-secondary" style={{color:"#FF5555",borderColor:"rgba(255,85,85,.3)"}} onClick={()=>{ window.speechSynthesis.cancel(); setPhase("setup"); setFeedback(null); setAnswer(""); }}>✖ Quit</button>
+            <button className="btn btn-secondary" style={{color:"#FF5555",borderColor:"rgba(255,85,85,.3)"}} onClick={()=>{ window.speechSynthesis.cancel(); setPhase("setup"); setFeedback(null); setAnswer(""); setHintedPos([]); }}>✖ Quit</button>
           </div>
         </div>
       )}
