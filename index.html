@@ -44,6 +44,8 @@ body::before{
   justify-content:center;
   min-height:100vh;
   padding:20px 24px;
+  opacity:0;
+  transition:opacity 0.4s ease;
 }
 
 /* ── CARD ── */
@@ -1192,7 +1194,11 @@ ReactDOM.createRoot(document.getElementById("app")).render(<Game/>);
   if(!splash) return;
   setTimeout(function(){
     splash.classList.add('fade-out');
-    setTimeout(function(){ splash.style.display='none'; }, 800);
+    setTimeout(function(){
+      splash.style.display='none';
+      var app = document.getElementById('app');
+      if(app) app.style.opacity = '1';
+    }, 800);
   }, 4000);
 })();
 </script>
