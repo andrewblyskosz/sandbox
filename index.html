@@ -934,6 +934,11 @@ function Game() {
               📂 LOAD LAST GAME
             </button>
           </div>
+          {results.length>0&&totalHints>0&&(
+            <div style={{textAlign:"center",marginBottom:"8px",fontSize:".72rem",fontWeight:800,letterSpacing:"1.5px",color:"rgba(255,215,0,0.6)",textTransform:"uppercase"}}>
+              💡 {totalHints} hint{totalHints===1?"":"s"} used
+            </div>
+          )}
                     <div className="words-grid">
             {Array(20).fill(0).map((_,i)=>{
               const w = words[i].trim().toLowerCase();
@@ -1013,11 +1018,6 @@ function Game() {
                   <span style={{width:"11px",height:"11px",borderRadius:"50%",background:"rgba(8,8,30,.9)",border:"1.5px solid rgba(255,45,120,.5)",display:"inline-block",flexShrink:0}}></span>NOT ASKED
                 </span>
               </div>
-              {totalHints>0&&(
-                <div style={{textAlign:"center",marginTop:"8px",fontSize:".72rem",fontWeight:800,letterSpacing:"1.5px",color:"rgba(255,215,0,0.6)",textTransform:"uppercase",position:"relative",zIndex:1}}>
-                  💡 {totalHints} hint{totalHints===1?"":"s"} used
-                </div>
-              )}
             </>
           )}
 
