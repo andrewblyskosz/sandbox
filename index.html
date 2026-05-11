@@ -1062,6 +1062,7 @@ function Game() {
               💡 {totalHints} hint{totalHints===1?"":"s"} used
             </div>
           )}
+          <div className="speak-section">
             <div className="speak-hint">👂 Listen carefully, then spell the word!</div>
             <button className={"btn btn-speak "+(speaking?"pulsing":"")} onClick={()=>{ speak(shuffled[idx]); setTimeout(()=>{ if(inputRef.current) inputRef.current.focus(); },100); }}>
               {speaking?"🔊  LISTENING...":"🔊  HEAR THE WORD"}
