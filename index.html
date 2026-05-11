@@ -1189,14 +1189,9 @@ ReactDOM.createRoot(document.getElementById("app")).render(<Game/>);
 (function(){
   var splash = document.getElementById('splash');
   if(!splash) return;
-  var app = document.getElementById('app');
-  if(app) app.style.visibility = 'hidden';
   setTimeout(function(){
     splash.classList.add('fade-out');
-    setTimeout(function(){
-      splash.style.display='none';
-      if(app) app.style.visibility = 'visible';
-    }, 800);
+    setTimeout(function(){ splash.style.display='none'; }, 800);
   }, 4000);
 })();
 </script>
